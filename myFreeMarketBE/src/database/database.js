@@ -29,7 +29,7 @@ function getUsersCollection(){
 }
 
 function getProductsCollection(){
-    return collections.users
+    return collections.products
 }
 
 module.exports = {

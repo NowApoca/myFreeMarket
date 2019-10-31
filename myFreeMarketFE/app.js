@@ -4,12 +4,25 @@ var favicon = require('static-favicon');
 var logger = require('morgan');
 var cookieParser = require('cookie-parser');
 var bodyParser = require('body-parser');
-
+const session = require("express-session");
+const uuid4 = require("uuid/v4")
 var routes = require('./routes/index');
 
 var app = express();
 
 // view engine setup
+
+app.use(session({
+  genid: (req) => {
+    console.log('Inside the session middleware')
+    console.log(req.sessionID)
+    return uuid4() // use UUIDs for session IDs
+  },
+  secret: 'keyboard cat',
+  resave: false,
+  saveUninitialized: true,
+}))
+
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'ejs');
 

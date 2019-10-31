@@ -19,10 +19,10 @@ async function initialize(){
 async function createCollections(db){
     const collections = await db.collections()
     if(!doesCollectionExist(collections,"users")){
-        await db.createCollection("users")
+       await (await db.createCollection("users")).createIndexes([ { key: { 'mail': 1 }, unique: true } ])
     }
     if(!doesCollectionExist(collections,"products")){
-        await db.createCollection("products")
+        await (await db.createCollection("products")).createIndexes([ { key: { 'productKey': 1 }, unique: true } ])
         
     }
 }

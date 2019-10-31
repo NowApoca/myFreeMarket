@@ -9,12 +9,6 @@ function getBackEnd(endpoint) {
 
 function postBackEnd(endpoint, data) {
 	let endpointUrl = "http://" + apiUrl + endpoint;
-    const headers = {};
-    console.log(endpointUrl)
-	// return axios.post(endpointUrl.toString(), {
-    //     firstName: 'Fred',
-    //     lastName: 'Flintstone'
-    //   });
     return axios({
         method: 'post',
         url: endpointUrl,

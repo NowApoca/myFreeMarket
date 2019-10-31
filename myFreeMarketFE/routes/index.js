@@ -1,9 +1,11 @@
 const express = require('express');
 const apiBackEnd = require("../src/requestBE");
 const router = express.Router();
-
 /* GET home page. */
+
 router.get('/', function(req, res) {
+  console.log('Inside the homepage callback function')
+  console.log(req.sessionID)
   res.render('index', { result: 'noooo0000000000000000000000000000oooo' });
 });
 
@@ -19,7 +21,7 @@ router.get('/login', function(req, res) {
 
 /* GET logup page. */
 router.get('/logup', function(req, res) {
-  res.render('logup', {});
+  res.render('logup', { title: 'Express' });
 });
 
 router.post('/logup/done',async function(req,res){
@@ -41,7 +43,22 @@ router.post('/login/done',async function(req,res){
       password: req.body.password
   }
   let result = await apiBackEnd.postBackEnd("/login", user);
-  console.log(result);
+  res.render('home',{result: result.data.result});
+});
+
+router.get('/publish',async function(req,res){
+  res.render('publish',{title: "Express"});
+});
+
+router.post('/publish/done',async function(req,res){
+  const product = {
+    productName: req.body.productName,
+    price: req.body.price,
+    initialStock: req.body.initialStock,
+    description: req.body.description,
+    dues: req.body.dues,
+  }
+  let result = await apiBackEnd.postBackEnd("/publish", product);
   res.render('home',{result: result.data.result});
 });
 
