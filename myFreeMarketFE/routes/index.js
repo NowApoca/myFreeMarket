@@ -43,8 +43,8 @@ router.post('/login/done',async function(req,res){
   }
   let resBE = await apiBackEnd.postBackEnd("/login", user);
   if(resBE.data.result == true){
-    createSessionID(res);
-    res.render('home',{result: resBE.data.result});
+    createSessionID(res, user);
+    res.render('home',{user: user.mail});
   }else{
     res.render('index',{result: resBE.data.result});
   }

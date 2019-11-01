@@ -1,21 +1,27 @@
 const uuid4 = require("uuid/v4");
+const memCache = require("memory-cache");
 
 function verifySession (req, res, next){
-    var cookie = req.cookies.sessionID;
-    if (cookie === undefined)
+    let userSession = memCache.get(req.cookies.sessionID);
+    if (userSession === null)
     {
         res.locals.verified = false;
     } 
     else
     {
         res.locals.verified = true;
+        res.locals.user = userSession.user;
     } 
     next();
 }
 
 
-function createSessionID(res){
-    res.cookie('sessionID', uuid4(), { maxAge: 10000, httpOnly: true });
+function createSessionID(res, user){
+    const uuid = uuid4();
+    memCache.put(uuid,{
+        user: user.mail
+    },10*1000);
+    res.cookie('sessionID', uuid, { maxAge: 10000, httpOnly: true });
 }
 
 module.exports = {
