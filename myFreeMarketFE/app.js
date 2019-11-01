@@ -12,10 +12,31 @@ var app = express();
 
 // view engine setup
 
+app.use(cookieParser());
+
+// set a cookie
+// app.use(function (req, res, next) {
+//   // check if client sent cookie
+//   var cookie = req.cookies.sessionIDs;
+//   console.log("COOKIE", cookie)
+//   if (cookie === undefined)
+//   {
+//     const uuid = uuid4()
+//     res.cookie('sessionIDs',uuid, { maxAge: 10000, httpOnly: true });
+//     console.log('cookie created successfully', uuid);
+//   } 
+//   else
+//   {
+//     // yes, cookie was already present 
+//     console.log('cookie exists', cookie);
+//   } 
+//   next(); // <-- important!
+// });
+
 app.use(session({
   genid: (req) => {
-    console.log('Inside the session middleware')
-    console.log(req.sessionID)
+    // console.log('Inside the session middleware')
+    // console.log(req.sessionID)
     return uuid4() // use UUIDs for session IDs
   },
   secret: 'keyboard cat',

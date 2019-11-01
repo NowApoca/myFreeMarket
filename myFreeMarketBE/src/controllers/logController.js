@@ -4,7 +4,7 @@ async function logIn(req, res){
     const users = database.getUsersCollection();
     const query = await users.find({mail: req.body.mail,  password: req.body.password});
     let output = {};
-    query.forEach(function(item){
+    await query.forEach(function(item){
         if(item){
             output.result = true;
         }else{

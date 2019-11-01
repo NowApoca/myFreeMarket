@@ -1,13 +1,12 @@
 const express = require('express');
 const apiBackEnd = require("../src/requestBE");
 const router = express.Router();
+const { createSessionID, verifySession } = require("./middleware");
+const uuid4 = require("uuid/v4");
+const logController = require("./controllers/logController")
 /* GET home page. */
 
-router.get('/', function(req, res) {
-  console.log('Inside the homepage callback function')
-  console.log(req.sessionID)
-  res.render('index', { result: 'noooo0000000000000000000000000000oooo' });
-});
+router.get('/', verifySession, logController.rootDomain);
 
 /* GET logout page. */
 router.get('/logout', function(req, res) {
@@ -42,8 +41,13 @@ router.post('/login/done',async function(req,res){
       mail: req.body.mail,
       password: req.body.password
   }
-  let result = await apiBackEnd.postBackEnd("/login", user);
-  res.render('home',{result: result.data.result});
+  let resBE = await apiBackEnd.postBackEnd("/login", user);
+  if(resBE.data.result == true){
+    createSessionID(res);
+    res.render('home',{result: resBE.data.result});
+  }else{
+    res.render('index',{result: resBE.data.result});
+  }
 });
 
 router.get('/publish',async function(req,res){
