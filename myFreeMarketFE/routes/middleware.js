@@ -11,7 +11,7 @@ function verifySession (req, res, next){
     {
         res.locals.verified = true;
         res.locals.user = userSession.user;
-    } 
+    }
     next();
 }
 
@@ -21,7 +21,7 @@ function createSessionID(res, user){
     memCache.put(uuid,{
         user: user.mail
     },10*1000);
-    res.cookie('sessionID', uuid, { maxAge: 10000, httpOnly: true });
+    res.cookie('sessionID', uuid, { maxAge: 20000, httpOnly: true });
 }
 
 module.exports = {

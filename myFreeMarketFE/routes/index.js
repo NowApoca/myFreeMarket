@@ -3,27 +3,28 @@ const apiBackEnd = require("../src/requestBE");
 const router = express.Router();
 const { createSessionID, verifySession } = require("./middleware");
 const uuid4 = require("uuid/v4");
-const logController = require("./controllers/logController")
+const logController = require("./controllers/logController");
+const productsController = require("./controllers/productsController");
 /* GET home page. */
 
 router.get('/', verifySession, logController.rootDomain);
 
 /* GET logout page. */
-router.get('/logout', function(req, res) {
+router.get('/logout', verifySession, function(req, res) {
   res.render('index', { title: 'Express' });
 });
 
 /* GET login page. */
-router.get('/login', function(req, res) {
+router.get('/login', verifySession, function(req, res) {
   res.render('login', { title: 'Express' });
 });
 
 /* GET logup page. */
-router.get('/logup', function(req, res) {
+router.get('/logup', verifySession, function(req, res) {
   res.render('logup', { title: 'Express' });
 });
 
-router.post('/logup/done',async function(req,res){
+router.post('/logup/done', verifySession, async function(req,res){
   const user = {
       name : req.body.name,
       lastName : req.body.lastName,
@@ -36,7 +37,7 @@ router.post('/logup/done',async function(req,res){
    
 });
 
-router.post('/login/done',async function(req,res){
+router.post('/login/done', verifySession, async function(req,res){
   const user = {
       mail: req.body.mail,
       password: req.body.password
@@ -50,20 +51,10 @@ router.post('/login/done',async function(req,res){
   }
 });
 
-router.get('/publish',async function(req,res){
+router.get('/publish', verifySession, async function(req,res){
   res.render('publish',{title: "Express"});
 });
 
-router.post('/publish/done',async function(req,res){
-  const product = {
-    productName: req.body.productName,
-    price: req.body.price,
-    initialStock: req.body.initialStock,
-    description: req.body.description,
-    dues: req.body.dues,
-  }
-  let result = await apiBackEnd.postBackEnd("/publish", product);
-  res.render('home',{result: result.data.result});
-});
+router.post('/publish/done', verifySession, productsController.publish );
 
 module.exports = router;
