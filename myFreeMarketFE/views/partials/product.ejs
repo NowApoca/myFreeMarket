@@ -1,8 +1,18 @@
-
 <div class="container-fluid bg-3 text-center">    
         <div class="row">
             <h1><%= title %></h1>
             <h1><%= price %></h1>
             <h1><%= description %></h1>
+            <form name="form1" method="POST" action="/product/pause/<%= productKey %>">
+                <input type="submit" value="Pause?" >
+            </form>
+            <form name="form2" method="POST" action="/product/unpause/<%= productKey %>">
+                <input type="submit" value="Unpause?" >
+            </form>
+            <form name="form3" method="POST" action="/product/delete/<%= productKey %>">
+                <input type="submit" value="Delete?" >
+            </form>
         </div>
     </div>
+    
+

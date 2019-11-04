@@ -16,11 +16,9 @@ async function publish(req, res){
           owner: res.locals.user,
           state: state.available,
         }
-        let result = await apiBackEnd.postBackEnd("/publish", product);
-        res.render('home',{result: result.data.result});
-    }else{
-        res.render('index', { result: 'noooo0000000000000000000000000000oooo' });
+        await apiBackEnd.postBackEnd("/publish", product);
     }
+    res.redirect("/")
 }
 
 async function pause(req, res){

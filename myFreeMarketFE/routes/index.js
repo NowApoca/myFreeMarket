@@ -32,9 +32,8 @@ router.post('/logup/done', verifySession, async function(req,res){
       password: req.body.password
   }
   let result = await apiBackEnd.postBackEnd("/logup", user);
-  res.render('index',{result: result.data.result});
   //res.json(student);
-   
+  res.redirect("/")
 });
 
 router.post('/login/done', verifySession, async function(req,res){
@@ -45,10 +44,8 @@ router.post('/login/done', verifySession, async function(req,res){
   let resBE = await apiBackEnd.postBackEnd("/login", user);
   if(resBE.data.result == true){
     createSessionID(res, user);
-    res.render('home',{user: user.mail});
-  }else{
-    res.render('index',{result: resBE.data.result});
   }
+  res.redirect("/")
 });
 
 /* POST products routes. */
@@ -59,8 +56,22 @@ router.get('/publish', verifySession, async function(req,res){
 
 router.get('/product/:id/:title', verifySession, async function(req,res){
   const productData = (await apiBackEnd.getBackEnd("/product/"+req.params.id)).data;
-  console.log(productData)
-  res.render('product',{title: productData.productName, price: productData.price, description: productData.description});
+  res.render('product',{title: productData.productName, price: productData.price, description: productData.description, productKey: productData.productKey});
+});
+
+router.post('/product/pause/:id', verifySession, async function(req,res){
+  await apiBackEnd.postBackEnd("/product/pause/"+req.params.id,{});
+  res.redirect("/")
+});
+
+router.post('/product/unpause/:id', verifySession, async function(req,res){
+  await apiBackEnd.postBackEnd("/product/unpause/"+req.params.id,{});
+  res.redirect("/")
+});
+
+router.post('/product/delete/:id', verifySession, async function(req,res){
+  await apiBackEnd.postBackEnd("/product/delete/"+req.params.id,{});
+  res.redirect("/")
 });
 
 router.post('/publish/done', verifySession, productsController.publish );

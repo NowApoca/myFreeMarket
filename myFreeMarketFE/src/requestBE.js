@@ -8,7 +8,8 @@ function getBackEnd(endpoint) {
 }
 
 function postBackEnd(endpoint, data) {
-	let endpointUrl = "http://" + apiUrl + endpoint;
+    let endpointUrl = "http://" + apiUrl + endpoint;
+    console.log(endpointUrl)
     return axios({
         method: 'post',
         url: endpointUrl,
