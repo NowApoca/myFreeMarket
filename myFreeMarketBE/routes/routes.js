@@ -19,8 +19,13 @@ router.get("/logout", logController.logUp);
 
 /* Product Apis*/
 
+router.get("/products", productController.getProducts);
 router.post("/publish", productController.publish);
 router.get("/product/:id", productController.getProductData);
+router.post("/product/pause/:id", productController.pauseProduct);
+router.post("/product/unpause/:id", productController.unpauseProduct);
+router.post("/product/delete/:id", productController.deleteProduct);
+router.post("/product/purchase/:productId/:purchaser", productController.purchaseProduct);
 
 /* User Apis*/
 

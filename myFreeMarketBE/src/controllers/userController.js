@@ -2,7 +2,7 @@ const database = require("../database/database");
 
 async function getUserProducts(req, res){
     const products = database.getProductsCollection();
-    const queryResult = await products.find({owner: req.body.user});
+    const queryResult = await products.find({owner: req.params.user});
     let output = {
         products: [],
     };
@@ -16,6 +16,7 @@ async function getUserProducts(req, res){
     })
 	res.status(200).json(output);
 }
+
 module.exports = {
     getUserProducts,
 }

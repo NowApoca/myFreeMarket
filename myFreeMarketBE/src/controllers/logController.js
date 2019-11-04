@@ -15,7 +15,7 @@ async function logIn(req, res){
 
 async function logUp(req, res){
     const users = database.getUsersCollection();
-    await users.insertOne({name: req.body.name, lastName:  req.body.lastName, mail: req.body.mail,  password: req.body.password});
+    await users.insertOne({name: req.body.name, lastName:  req.body.lastName, mail: req.body.mail,  password: req.body.password, balance: 100});
     let output = {
         result:"DONE"
     }
