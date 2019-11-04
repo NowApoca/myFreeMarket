@@ -51,8 +51,16 @@ router.post('/login/done', verifySession, async function(req,res){
   }
 });
 
+/* POST products routes. */
+
 router.get('/publish', verifySession, async function(req,res){
   res.render('publish',{title: "Express"});
+});
+
+router.get('/product/:id/:title', verifySession, async function(req,res){
+  const productData = (await apiBackEnd.getBackEnd("/product/"+req.params.id)).data;
+  console.log(productData)
+  res.render('product',{title: productData.productName, price: productData.price, description: productData.description});
 });
 
 router.post('/publish/done', verifySession, productsController.publish );

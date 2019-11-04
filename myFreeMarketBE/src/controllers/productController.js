@@ -10,6 +10,7 @@ async function publish(req, res){
             initialStock: req.body.initialStock,
             description: req.body.description,
             dues: req.body.dues,
+            owner: req.body.owner,
             productKey: uuidv4(),
             timestamp: Math.trunc((new Date()).getTime()/1000)}
         await products.insertOne(item);
@@ -24,7 +25,14 @@ async function publish(req, res){
 	res.status(200).json(result);
 }
 
+async function getProductData(req, res){
+    const products = database.getProductsCollection();
+    const productData = await products.findOne({productKey: req.params.id})
+	res.status(200).json(productData);
+}
+
 module.exports = {
     publish,
+    getProductData,
 }
 

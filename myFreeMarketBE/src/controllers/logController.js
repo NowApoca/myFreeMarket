@@ -2,15 +2,14 @@ const database = require("../database/database");
 
 async function logIn(req, res){
     const users = database.getUsersCollection();
-    const query = await users.find({mail: req.body.mail,  password: req.body.password});
+    const queryResult = await users.findOne({mail: req.body.mail,  password: req.body.password});
     let output = {};
-    await query.forEach(function(item){
-        if(item){
-            output.result = true;
-        }else{
-            output.result = false;
-        }
-    })
+    console.log(queryResult)
+    if(queryResult){
+        output.result = true;
+    }else{
+        output.result = false;
+    }
 	res.status(200).json(output);
 }
 

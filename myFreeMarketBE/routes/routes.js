@@ -3,6 +3,7 @@ const express = require('express');
 const router = express.Router();
 const logController = require("../src/controllers/logController");
 const productController = require("../src/controllers/productController");
+const userController = require("../src/controllers/userController");
 
 /* Home */
 
@@ -19,5 +20,10 @@ router.get("/logout", logController.logUp);
 /* Product Apis*/
 
 router.post("/publish", productController.publish);
+router.get("/product/:id", productController.getProductData);
+
+/* User Apis*/
+
+router.get("/user-products/:user", userController.getUserProducts);
 
 module.exports = router;

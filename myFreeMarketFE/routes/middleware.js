@@ -20,7 +20,7 @@ function createSessionID(res, user){
     const uuid = uuid4();
     memCache.put(uuid,{
         user: user.mail
-    },10*1000);
+    },120*1000);
     res.cookie('sessionID', uuid, { maxAge: 20000, httpOnly: true });
 }
 

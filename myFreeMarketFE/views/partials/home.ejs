@@ -4,5 +4,8 @@
             <h1 href="http://localhost:3005/login"> ESTAS EN HOME, <%= user %></h1>
             <button > <a href="http://localhost:3005/publish"> Publish </a> </button>
             <button > <a href="http://localhost:3005/logout"> Log Out </a> </button>
+            <% for (let i = 0; i < products.length; i++) { %>
+                <a href='/product/<%= products[i].productKey %>/<%= products[i].productName %>' class="button"><%= products[i].productName %></a>
+            <% } %>
         </div>
     </div>
