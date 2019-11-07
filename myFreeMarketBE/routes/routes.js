@@ -30,8 +30,10 @@ router.post("/product/pause/:id", checkProductExist, productController.pauseProd
 router.post("/product/unpause/:id", checkProductExist, productController.unpauseProduct);
 router.post("/product/delete/:id", checkProductExist, productController.deleteProduct);
 router.post("/product/purchase/:productId/:purchaser", productController.purchaseProduct);
-router.post("/product/comment/:productId", productController.commentProduct);
-router.post("/product/comment/subcomment/:productId", productController.commentProduct);
+router.post("/product/:productId/comment", productController.commentProduct);
+router.post("/product/:productId/comment/:action/:numberComment", productController.voteCommentProduct);
+router.post("/product/:productId/comment/subcomment/:numberComment", productController.subcommentComment);
+router.post("/product/:productId/comment/subcomment/:action/:numberComment/:numberSubcomment", productController.voteSubcommentProduct);
 router.post("/product/:productId/change/parameter/:parameter/value/:value", validateProductchangeParameters, productController.changeProductParameters);
 
 // /* User Apis*/

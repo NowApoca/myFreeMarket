@@ -121,27 +121,64 @@ async function commentProduct(req, res){
     const products =  database.getProductsCollection();
     const product = await products.findOne({productKey: req.params.productId});
     product.comments.push({
-        comment: req.body.comment,
-        timestamp: req.body.timestamp,
+        text: req.body.text,
+        timestamp: Math.trunc((new Date()).getTime()/1000),
         user: req.body.user,
         subcomments: [],
         points: 0,
+        voters: [],
     })
     await products.updateOne({productKey: req.params.productId}, {"$set": {comments: product.comments}});
-	res.status(200).json({});
+	res.status(200).json();
+}
+// a
+async function voteCommentProduct(req, res){
+    const products =  database.getProductsCollection();
+    const product = await products.findOne({productKey: req.params.productId});
+    if(product.comments[parseInt(req.params.numberComment)].voters.indexOf(req.body.user)>=0){
+        res.statusMessage = "You have already upvoted it."
+        res.status(404).end();
+        return;
+    }
+    if(req.params.action == "downvote"){
+        product.comments[parseInt(req.params.numberComment)].points--;
+    }else{
+        product.comments[parseInt(req.params.numberComment)].points++;
+    }
+    product.comments[parseInt(req.params.numberComment)].voters.push(req.body.user);
+    await products.updateOne({productKey: req.params.productId}, {"$set": {comments: product.comments}});
+	res.status(200).json();
 }
 
 async function subcommentComment(req, res){
     const products =  database.getProductsCollection();
     const product = await products.findOne({productKey: req.params.productId});
-    product.comments[req.body.commentID].subcomments.push({
-        comment: req.body.comment,
-        timestamp: req.body.timestamp,
+    product.comments[parseInt(req.params.numberComment)].subcomments.push({
+        text: req.body.text,
+        timestamp: Math.trunc((new Date()).getTime()/1000),
         user: req.body.user,
-        comments: [],
     })
     await products.updateOne({productKey: req.params.productId}, {"$set": {comments: product.comments}});
 	res.status(200).json({});
+}
+
+
+async function voteSubcommentProduct(req, res){
+    const products =  database.getProductsCollection();
+    const product = await products.findOne({productKey: req.params.productId});
+    if(product.comments[parseInt(req.params.numberComment)].subcomments[parseInt(req.params.numberSubcomment)].voters.indexOf(req.body.user)>=0){
+        res.statusMessage = "You have already upvoted it."
+        res.status(404).end();
+        return;
+    }
+    if(req.params.action == "downvote"){
+        product.comments[parseInt(req.params.numberComment)].subcomments[parseInt(req.params.numberSubcomment)].points--;
+    }else{
+        product.comments[parseInt(req.params.numberComment)].subcomments[parseInt(req.params.numberSubcomment)].points++;
+    }
+    product.comments[parseInt(req.params.numberComment)].voters.push(req.body.user);
+    await products.updateOne({productKey: req.params.productId}, {"$set": {comments: product.comments}});
+	res.status(200).json();
 }
 
 async function changeProductParameters(req, res){
@@ -162,7 +199,9 @@ module.exports = {
     deleteProduct,
     purchaseProduct,
     commentProduct,
+    voteCommentProduct,
     subcommentComment,
+    voteSubcommentProduct,
     changeProductParameters,
 }
 
