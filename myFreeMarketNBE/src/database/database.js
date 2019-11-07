@@ -1,16 +1,16 @@
-const mongoDb = require(__dirname + "/./mongoInit");
+const mongoDb = require("./mongoInit");
 
 let db;
 let collections;
 let client;
 
-async function initialize(database, settings){
+async function initialize(database){
     let dataBase;
     switch(database){
         case "mongo":
-            dataBase = await mongoDb.initialize(settings);
+            dataBase = await mongoDb.initialize();
         case "default":
-            dataBase = await mongoDb.initialize(settings);
+            dataBase = await mongoDb.initialize();
     }
     db = dataBase.db;
     client = dataBase.client;
@@ -18,9 +18,6 @@ async function initialize(database, settings){
         users: db.collection("users"),
         products: db.collection("products"),
         complains: db.collection("complains"),
-        balance: db.collection("balances"),
-        accounts: db.collection("accounts"),
-        txs: db.collection("txs"),
     };
 }
 
@@ -37,21 +34,8 @@ function getProductsCollection(){
 }
 
 function getComplainsCollection (){
-    return collections.complains
+    return collections.products
 }
-
-function getBalanceCollection (){
-    return collections.balance
-}
-
-function getAccountsCollection (){
-    return collections.accounts
-}
-
-function getTxsCollection (){
-    return collections.txs
-}
-
 
 module.exports = {
     initialize,
@@ -59,7 +43,4 @@ module.exports = {
     getUsersCollection,
     getClient,
     getComplainsCollection,
-    getBalanceCollection,
-    getAccountsCollection,
-    getTxsCollection,
 }

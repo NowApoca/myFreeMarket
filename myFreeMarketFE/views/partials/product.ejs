@@ -12,9 +12,18 @@
             <form name="form3" method="POST" action="/product/delete/<%= productKey %>">
                 <input type="submit" value="Delete?" >
             </form>
-            <form name="form3" method="POST" action="/product/purchase/<%= productKey %>">
+            <form name="form4" method="POST" action="/product/purchase/<%= productKey %>">
                 <input type="submit" value="Comprar" >
             </form>
+            <form name="form5" method="POST" action="/product/comment/<%= productKey %>">
+                <table>
+                    <tr>
+                    <td>Comment </td>
+                    <td><input type="text" name="comment" ></td><tr>
+                    <td colspan="2"><input type="submit" value="Log in" ></td>
+                    </tr>
+                </table>
+            </form> 
         </div>
     </div>
     

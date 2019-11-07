@@ -1,4 +1,4 @@
-const database = require(__dirname + "/../database/database");
+const database = require("../database/database");
 const uuidv4 = require('uuid/v4');
 
 async function getProducts(req, res){
@@ -71,13 +71,12 @@ async function deleteProduct(req, res){
 
 async function purchaseProduct(req, res){
     const products =  database.getProductsCollection();
-    const balances =  database.getBalanceCollection();
     const users =  database.getUsersCollection();
     const product = await products.findOne({productKey: req.params.productId});
     const seller = await users.findOne({mail: product.owner});
     const purchaser = await users.findOne({mail: req.params.purchaser});
-    await balances.updateOne({mail: req.params.purchaser}, { "$set": { balance: (parseInt(purchaser.balance) - parseInt(product.price))}});
-    await balances.updateOne({mail: product.owner},{ "$set": { balance: (parseInt(seller.balance) + parseInt(product.price))}} );
+    await users.updateOne({mail: req.params.purchaser}, { "$set": { balance: (parseInt(purchaser.balance) - parseInt(product.price))}});
+    await users.updateOne({mail: product.owner},{ "$set": { balance: (parseInt(seller.balance) + parseInt(product.price))}} );
     await products.updateOne({productKey: req.params.productId},{ $set: { status: "purchased"} });
 	res.status(200).json({});
 }
@@ -122,14 +121,6 @@ async function subcommentComment(req, res){
 	res.status(200).json({});
 }
 
-async function changeProductParameters(req, res){
-    const products =  database.getProductsCollection();
-    const product = await products.findOne({productKey: req.params.productId});
-    product.parameters[req.params.parameter] = req.params.value;
-    await products.updateOne({productKey: req.params.productId}, {"$set": {comments: product.comments}});
-	res.status(200).json({});
-}
-
 module.exports = {
     getProducts,
     publish,
@@ -140,6 +131,5 @@ module.exports = {
     purchaseProduct,
     commentProduct,
     subcommentComment,
-    changeProductParameters,
 }
 

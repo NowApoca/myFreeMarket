@@ -5,6 +5,9 @@ const { createSessionID, verifySession } = require("./middleware");
 const uuid4 = require("uuid/v4");
 const logController = require("./controllers/logController");
 const productsController = require("./controllers/productsController");
+
+const memCache = require("memory-cache");
+
 /* GET home page. */
 
 router.get('/', verifySession, logController.rootDomain);
@@ -76,11 +79,19 @@ router.post('/product/delete/:id', verifySession, async function(req,res){
 });
 
 router.post('/product/purchase/:id', verifySession, async function(req,res){
-
-  const memCache = require("memory-cache");
   let user = memCache.get(req.cookies.sessionID)
 
   await apiBackEnd.postBackEnd("/product/purchase/"+req.params.id+"/"+user.user,{});
+  res.redirect("/")
+});
+
+router.post('/product/comment/:id', verifySession, async function(req,res){
+  let user = memCache.get(req.cookies.sessionID);
+  await apiBackEnd.postBackEnd("/product/comment/"+req.params.id, {
+    comment:req.body.comment,
+    user: user.user,
+    timestamp: Math.trunc((new Date()).getTime()/1000),
+  });
   res.redirect("/")
 });
 

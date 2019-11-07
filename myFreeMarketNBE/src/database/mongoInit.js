@@ -2,9 +2,9 @@ const client = require("mongodb").MongoClient;
 const assert = require("assert");
 
 
-async function initialize(settings){
-    const url = settings.dbUrl;
-    const dbName = settings.dbName;
+async function initialize(){
+    const url = "mongodb://localhost:27017";
+    const dbName = "myFreeMarket";
     const db = await new Promise(function(resolve, reject){
         client.connect(url,async function(err, client){
             assert.equal(null, err);
@@ -26,15 +26,6 @@ async function createCollections(db){
     }
     if(!doesCollectionExist(collections,"complains")){
         await (await db.createCollection("complains")).createIndexes([ { key: { 'productKey': 1 }, unique: true } ])
-    }
-    if(!doesCollectionExist(collections,"balances")){
-        await (await db.createCollection("balances")).createIndexes([ { key: { 'productKey': 1 }, unique: true } ])
-    }
-    if(!doesCollectionExist(collections,"accounts")){
-        await (await db.createCollection("accounts")).createIndexes([ { key: { 'productKey': 1 }, unique: true } ])
-    }
-    if(!doesCollectionExist(collections,"txs")){
-        await (await db.createCollection("txs")).createIndexes([ { key: { 'productKey': 1 }, unique: true } ])
     }
 }
 
