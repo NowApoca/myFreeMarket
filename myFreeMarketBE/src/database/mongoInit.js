@@ -25,16 +25,16 @@ async function createCollections(db){
         await (await db.createCollection("products")).createIndexes([ { key: { 'productKey': 1 }, unique: true } ])
     }
     if(!doesCollectionExist(collections,"complains")){
-        await (await db.createCollection("complains")).createIndexes([ { key: { 'productKey': 1 }, unique: true } ])
+        await (await db.createCollection("complains")).createIndexes([ { key: { 'complainKey': 1 }, unique: true } ])
     }
     if(!doesCollectionExist(collections,"balances")){
-        await (await db.createCollection("balances")).createIndexes([ { key: { 'productKey': 1 }, unique: true } ])
+        await (await db.createCollection("balances")).createIndexes([ { key: { 'mail': 1 }, unique: true } ])
     }
     if(!doesCollectionExist(collections,"accounts")){
-        await (await db.createCollection("accounts")).createIndexes([ { key: { 'productKey': 1 }, unique: true } ])
+        await (await db.createCollection("accounts")).createIndexes([ { key: { 'address': 1 }, unique: true } ])
     }
     if(!doesCollectionExist(collections,"txs")){
-        await (await db.createCollection("txs")).createIndexes([ { key: { 'productKey': 1 }, unique: true } ])
+        await (await db.createCollection("txs")).createIndexes([ { key: { 'txID': 1 }, unique: true } ])
     }
 }
 

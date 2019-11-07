@@ -5,7 +5,7 @@ const logController = require(__dirname + "/../src/controllers/logController");
 const productController = require(__dirname + "/../src/controllers/productController");
 const userController = require(__dirname + "/../src/controllers/userController");
 const monitorController = require("../src/controllers//monitorController");
-const { checkUserExist } = require("./middleware")
+const { checkUserExist, validateProductParameters, checkProductExist, validateProductchangeParameters } = require("./middleware")
 /* Home */
 
 router.get("/", function(req,res){
@@ -24,15 +24,15 @@ router.post("/logup", logController.logUp);
 /* Product Apis*/
 
 router.get("/products", productController.getProducts);
-router.post("/publish", productController.publish);
-router.get("/product/:id", productController.getProductData);
-router.post("/product/pause/:id", productController.pauseProduct);
-router.post("/product/unpause/:id", productController.unpauseProduct);
-router.post("/product/delete/:id", productController.deleteProduct);
+router.post("/publish", validateProductParameters, productController.publish);
+router.get("/product/:id", checkProductExist, productController.getProductData);
+router.post("/product/pause/:id", checkProductExist, productController.pauseProduct);
+router.post("/product/unpause/:id", checkProductExist, productController.unpauseProduct);
+router.post("/product/delete/:id", checkProductExist, productController.deleteProduct);
 router.post("/product/purchase/:productId/:purchaser", productController.purchaseProduct);
 router.post("/product/comment/:productId", productController.commentProduct);
 router.post("/product/comment/subcomment/:productId", productController.commentProduct);
-router.post("/product/change/parameter/:parameter/value/:value", productController.changeProductParameters);
+router.post("/product/:productId/change/parameter/:parameter/value/:value", validateProductchangeParameters, productController.changeProductParameters);
 
 // /* User Apis*/
 

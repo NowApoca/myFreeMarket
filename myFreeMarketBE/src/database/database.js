@@ -4,9 +4,9 @@ let db;
 let collections;
 let client;
 
-async function initialize(database, settings){
+async function initialize(dbType, settings){
     let dataBase;
-    switch(database){
+    switch(dbType){
         case "mongo":
             dataBase = await mongoDb.initialize(settings);
         case "default":
@@ -26,6 +26,10 @@ async function initialize(database, settings){
 
 function getClient(){
     return client;
+}
+
+function getDb(){
+    return db;
 }
 
 function getUsersCollection(){
@@ -55,9 +59,10 @@ function getTxsCollection (){
 
 module.exports = {
     initialize,
+    getClient,
+    getDb,
     getProductsCollection,
     getUsersCollection,
-    getClient,
     getComplainsCollection,
     getBalanceCollection,
     getAccountsCollection,

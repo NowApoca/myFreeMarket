@@ -21,13 +21,14 @@ async function logIn(req, res){
             statusMessage = "Invalid Mail or Password."
         }
         res.statusMessage = statusMessage;
-        res.status(404).json();
+        res.status(404).end();
     }
     return;
 }
 
 async function logUp(req, res){
     const users = database.getUsersCollection();
+    const balance = database.getBalanceCollection();
     const user = await users.findOne({mail: req.body.mail});
     if(user){
         res.statusMessage = "Mail already in use.";
@@ -41,6 +42,8 @@ async function logUp(req, res){
         balance: 100,
         passwords:[],
         favProducts: [],
+        sales: [],
+        purchases: [],
         productsPublished: [],
         loginFailedAttempts: 0,
         loginStatus: true});
