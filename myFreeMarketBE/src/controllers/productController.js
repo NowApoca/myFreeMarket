@@ -90,9 +90,8 @@ async function purchaseProduct(req, res){
     }
     const seller = await users.findOne({mail: product.owner});
     const purchaser = await users.findOne({mail: req.params.purchaser});
-    const purchaserBalance = await users.findOne({mail: req.params.purchaser});
-    if(purchaserBalance.balance < product.price){
-        res.statusMessage = "Not enough founds. You need '" + (product.price - purchaserBalance.balance) + "' more for buying that product."
+    if(purchaser.balance < product.price){
+        res.statusMessage = "Not enough founds. You need '" + (product.price - purchaser.balance) + "' more for buying that product."
         res.status(404).end();
         return;
     }
@@ -157,6 +156,8 @@ async function subcommentComment(req, res){
         text: req.body.text,
         timestamp: Math.trunc((new Date()).getTime()/1000),
         user: req.body.user,
+        voters: [],
+        points: 0,
     })
     await products.updateOne({productKey: req.params.productId}, {"$set": {comments: product.comments}});
 	res.status(200).json({});
@@ -176,7 +177,7 @@ async function voteSubcommentProduct(req, res){
     }else{
         product.comments[parseInt(req.params.numberComment)].subcomments[parseInt(req.params.numberSubcomment)].points++;
     }
-    product.comments[parseInt(req.params.numberComment)].voters.push(req.body.user);
+    product.comments[parseInt(req.params.numberComment)].subcomments[parseInt(req.params.numberSubcomment)].voters.push(req.body.user);
     await products.updateOne({productKey: req.params.productId}, {"$set": {comments: product.comments}});
 	res.status(200).json();
 }

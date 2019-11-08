@@ -447,7 +447,7 @@ describe('Products Controller', function() {
         const productCommented = await products.findOne({productKey: resultPost.data});
         expect(productCommented.comments.length).toEqual(1);
         expect(productCommented.comments[0].text).toEqual(text);
-        const resultPost3 = await axios.post("http://localhost:" + settings.port +"/product/"+resultPost.data+"/comment/upvote/0",{
+        const resultPost3 = await axios.post("http://localhost:" + settings.port +"/product/"+resultPost.data+"/comment/vote/upvote/0",{
             user: user.mail
         });
         expect(resultPost3.status).toEqual(200);
@@ -483,7 +483,7 @@ describe('Products Controller', function() {
         const productCommented = await products.findOne({productKey: resultPost.data});
         expect(productCommented.comments.length).toEqual(1);
         expect(productCommented.comments[0].text).toEqual(text);
-        const resultPost3 = await axios.post("http://localhost:" + settings.port +"/product/"+resultPost.data+"/comment/upvote/0",{
+        const resultPost3 = await axios.post("http://localhost:" + settings.port +"/product/"+resultPost.data+"/comment/vote/upvote/0",{
             user: user.mail
         });
         expect(resultPost3.status).toEqual(200);
@@ -491,7 +491,7 @@ describe('Products Controller', function() {
         expect(productCommented2.comments.length).toEqual(1);
         expect(productCommented2.comments[0].points).toEqual(1);
         expect(productCommented2.comments[0].voters.indexOf(user.mail)).toBeGreaterThanOrEqual(0);
-        const resultError = await common.getErrorAsyncRequest(axios.post("http://localhost:" + settings.port +"/product/"+resultPost.data+"/comment/upvote/0",{
+        const resultError = await common.getErrorAsyncRequest(axios.post("http://localhost:" + settings.port +"/product/"+resultPost.data+"/comment/vote/upvote/0",{
             user: user.mail
         }));
         expect(resultError.status).toEqual(404);
@@ -523,7 +523,7 @@ describe('Products Controller', function() {
         const productCommented = await products.findOne({productKey: resultPost.data});
         expect(productCommented.comments.length).toEqual(1);
         expect(productCommented.comments[0].text).toEqual(text);
-        const resultPost3 = await axios.post("http://localhost:" + settings.port +"/product/"+resultPost.data+"/comment/downvote/0",{
+        const resultPost3 = await axios.post("http://localhost:" + settings.port +"/product/"+resultPost.data+"/comment/vote/downvote/0",{
             user: user.mail
         });
         expect(resultPost3.status).toEqual(200);
@@ -559,7 +559,7 @@ describe('Products Controller', function() {
         const productCommented = await products.findOne({productKey: resultPost.data});
         expect(productCommented.comments.length).toEqual(1);
         expect(productCommented.comments[0].text).toEqual(text);
-        const resultPost3 = await axios.post("http://localhost:" + settings.port +"/product/"+resultPost.data+"/comment/downvote/0",{
+        const resultPost3 = await axios.post("http://localhost:" + settings.port +"/product/"+resultPost.data+"/comment/vote/downvote/0",{
             user: user.mail
         });
         expect(resultPost3.status).toEqual(200);
@@ -567,7 +567,7 @@ describe('Products Controller', function() {
         expect(productCommented2.comments.length).toEqual(1);
         expect(productCommented2.comments[0].points).toEqual(-1);
         expect(productCommented2.comments[0].voters.indexOf(user.mail)).toBeGreaterThanOrEqual(0);
-        const resultError = await common.getErrorAsyncRequest(axios.post("http://localhost:" + settings.port +"/product/"+resultPost.data+"/comment/downvote/0",{
+        const resultError = await common.getErrorAsyncRequest(axios.post("http://localhost:" + settings.port +"/product/"+resultPost.data+"/comment/vote/downvote/0",{
             user: user.mail
         }));
         expect(resultError.status).toEqual(404);
@@ -575,157 +575,219 @@ describe('Products Controller', function() {
     });
 
 
-    // it('Add subcomment to a product comment', async () => {
-    //     await dropDatabase();
-    //     const products = database.getProductsCollection()
-    //     const user = await createUser();
-    //     const text = "NICE TEST!";
-    //     const product = {
-    //         productName: uuid4(),
-    //         price: 300,
-    //         initialStock: 5,
-    //         description: uuid4(),
-    //         dues: 3,
-    //         owner: user.mail,
-    //         timestamp: Math.trunc((new Date()).getTime()/1000),
-    //     }
-    //     const resultPost = await axios.post("http://localhost:" + settings.port + "/publish", product);
-    //     expect(resultPost.status).toEqual(200);
-    //     const resultPost2 = await axios.post("http://localhost:" + settings.port +"/product/"+resultPost.data+"/comment",{
-    //         user: user.mail,
-    //         text: text
-    //     });
-    //     expect(resultPost2.status).toEqual(200);
-    //     const productCommented = await products.findOne({productKey: resultPost.data});
-    //     expect(productCommented.comments.length).toEqual(1);
-    //     expect(productCommented.comments[0].text).toEqual(text);
-    //     console.log(" ESTO ", "http://localhost:" + settings.port +"/product/"+resultPost.data+"/comment/subcomment/0")
-    //     const resultPost3 = await axios.post("http://localhost:" + settings.port +"/product/"+resultPost.data+"/comment/subcomment/0",{
-    //         user: user.mail,
-    //         text: "NICE SUB COMMENT"
-    //     });
-    //     expect(resultPost3.status).toEqual(200);
-    //     const productCommented2 = await products.findOne({productKey: resultPost.data});
-    //     expect(productCommented2.comments[0].subcomments.length).toEqual(1);
-    //     expect(productCommented2.comments[0].subcomments[0].text).toEqual("NICE SUB COMMENT");
-    // });
+    it('Add subcomment to a product comment', async () => {
+        await dropDatabase();
+        const products = database.getProductsCollection()
+        const user = await createUser();
+        const text = "NICE TEST!";
+        const product = {
+            productName: uuid4(),
+            price: 300,
+            initialStock: 5,
+            description: uuid4(),
+            dues: 3,
+            owner: user.mail,
+            timestamp: Math.trunc((new Date()).getTime()/1000),
+        }
+        const resultPost = await axios.post("http://localhost:" + settings.port + "/publish", product);
+        expect(resultPost.status).toEqual(200);
+        const resultPost2 = await axios.post("http://localhost:" + settings.port +"/product/"+resultPost.data+"/comment",{
+            user: user.mail,
+            text: text
+        });
+        expect(resultPost2.status).toEqual(200);
+        const productCommented = await products.findOne({productKey: resultPost.data});
+        expect(productCommented.comments.length).toEqual(1);
+        expect(productCommented.comments[0].text).toEqual(text);
+        const resultPost3 = await axios.post("http://localhost:" + settings.port +"/product/"+resultPost.data+"/subcomment/0",{
+            user: user.mail,
+            text: "NICE SUB COMMENT"
+        });
+        expect(resultPost3.status).toEqual(200);
+        const productCommented2 = await products.findOne({productKey: resultPost.data});
+        expect(productCommented2.comments[0].subcomments.length).toEqual(1);
+        expect(productCommented2.comments[0].subcomments[0].text).toEqual("NICE SUB COMMENT");
+    });
 
 
+    it('Add upvote to a subcomment', async () => {
+        await dropDatabase();
+        const products = database.getProductsCollection()
+        const user = await createUser();
+        const text = "NICE TEST!";
+        const product = {
+            productName: uuid4(),
+            price: 300,
+            initialStock: 5,
+            description: uuid4(),
+            dues: 3,
+            owner: user.mail,
+            timestamp: Math.trunc((new Date()).getTime()/1000),
+        }
+        const resultPost = await axios.post("http://localhost:" + settings.port + "/publish", product);
+        expect(resultPost.status).toEqual(200);
+        const resultPost2 = await axios.post("http://localhost:" + settings.port +"/product/"+resultPost.data+"/comment",{
+            user: user.mail,
+            text: text
+        });
+        expect(resultPost2.status).toEqual(200);
+        const productCommented = await products.findOne({productKey: resultPost.data});
+        expect(productCommented.comments.length).toEqual(1);
+        expect(productCommented.comments[0].text).toEqual(text);
+        const resultPost3 = await axios.post("http://localhost:" + settings.port +"/product/"+resultPost.data+"/subcomment/0",{
+            user: user.mail,
+            text: "NICE SUB COMMENT"
+        });
+        expect(resultPost3.status).toEqual(200);
+        const productCommented2 = await products.findOne({productKey: resultPost.data});
+        expect(productCommented2.comments[0].subcomments.length).toEqual(1);
+        expect(productCommented2.comments[0].subcomments[0].text).toEqual("NICE SUB COMMENT");
+        const resultPost4 = await axios.post("http://localhost:" + settings.port +"/product/"+resultPost.data+"/subcomment/vote/upvote/0/0",{
+            user: user.mail
+        });
+        expect(resultPost4.status).toEqual(200);
+        const productCommented3 = await products.findOne({productKey: resultPost.data});
+        expect(productCommented3.comments[0].subcomments.length).toEqual(1);
+        expect(productCommented3.comments[0].subcomments[0].points).toEqual(1);
+        expect(productCommented3.comments[0].subcomments[0].voters.indexOf(user.mail)).toBeGreaterThanOrEqual(0);
+    });
     
-    // it('Add upvote to a product which already has it', async () => {
-    //     await dropDatabase();
-    //     const products = database.getProductsCollection()
-    //     const user = await createUser();
-    //     const text = "NICE TEST!";
-    //     const product = {
-    //         productName: uuid4(),
-    //         price: 300,
-    //         initialStock: 5,
-    //         description: uuid4(),
-    //         dues: 3,
-    //         owner: user.mail,
-    //         timestamp: Math.trunc((new Date()).getTime()/1000),
-    //     }
-    //     const resultPost = await axios.post("http://localhost:" + settings.port + "/publish", product);
-    //     expect(resultPost.status).toEqual(200);
-    //     const resultPost2 = await axios.post("http://localhost:" + settings.port +"/product/"+resultPost.data+"/comment",{
-    //         user: user.mail,
-    //         text: text
-    //     });
-    //     expect(resultPost2.status).toEqual(200);
-    //     const productCommented = await products.findOne({productKey: resultPost.data});
-    //     expect(productCommented.comments.length).toEqual(1);
-    //     expect(productCommented.comments[0].text).toEqual(text);
-    //     const resultPost3 = await axios.post("http://localhost:" + settings.port +"/product/"+resultPost.data+"/comment/upvote/0",{
-    //         user: user.mail
-    //     });
-    //     expect(resultPost3.status).toEqual(200);
-    //     const productCommented2 = await products.findOne({productKey: resultPost.data});
-    //     expect(productCommented2.comments.length).toEqual(1);
-    //     expect(productCommented2.comments[0].points).toEqual(1);
-    //     expect(productCommented2.comments[0].voters.indexOf(user.mail)).toBeGreaterThanOrEqual(0);
-    //     const resultError = await common.getErrorAsyncRequest(axios.post("http://localhost:" + settings.port +"/product/"+resultPost.data+"/comment/upvote/0",{
-    //         user: user.mail
-    //     }));
-    //     expect(resultError.status).toEqual(404);
-    //     expect(resultError.e).toEqual("You have already upvoted it.");
-    // });
+    it('Add upvote to a subcomment and it already has it', async () => {
+        await dropDatabase();
+        const products = database.getProductsCollection()
+        const user = await createUser();
+        const text = "NICE TEST!";
+        const product = {
+            productName: uuid4(),
+            price: 300,
+            initialStock: 5,
+            description: uuid4(),
+            dues: 3,
+            owner: user.mail,
+            timestamp: Math.trunc((new Date()).getTime()/1000),
+        }
+        const resultPost = await axios.post("http://localhost:" + settings.port + "/publish", product);
+        expect(resultPost.status).toEqual(200);
+        const resultPost2 = await axios.post("http://localhost:" + settings.port +"/product/"+resultPost.data+"/comment",{
+            user: user.mail,
+            text: text
+        });
+        expect(resultPost2.status).toEqual(200);
+        const productCommented = await products.findOne({productKey: resultPost.data});
+        expect(productCommented.comments.length).toEqual(1);
+        expect(productCommented.comments[0].text).toEqual(text);
+        const resultPost3 = await axios.post("http://localhost:" + settings.port +"/product/"+resultPost.data+"/subcomment/0",{
+            user: user.mail,
+            text: "NICE SUB COMMENT"
+        });
+        expect(resultPost3.status).toEqual(200);
+        const productCommented2 = await products.findOne({productKey: resultPost.data});
+        expect(productCommented2.comments[0].subcomments.length).toEqual(1);
+        expect(productCommented2.comments[0].subcomments[0].text).toEqual("NICE SUB COMMENT");
+        const resultPost4 = await axios.post("http://localhost:" + settings.port +"/product/"+resultPost.data+"/subcomment/vote/upvote/0/0",{
+            user: user.mail
+        });
+        expect(resultPost4.status).toEqual(200);
+        const productCommented3 = await products.findOne({productKey: resultPost.data});
+        expect(productCommented3.comments[0].subcomments.length).toEqual(1);
+        expect(productCommented3.comments[0].subcomments[0].points).toEqual(1);
+        expect(productCommented3.comments[0].subcomments[0].voters.indexOf(user.mail)).toBeGreaterThanOrEqual(0);
+        const resultError = await common.getErrorAsyncRequest(axios.post("http://localhost:" + settings.port +"/product/"+resultPost.data+"/subcomment/vote/upvote/0/0",{
+            user: user.mail
+        }));
+        expect(resultError.status).toEqual(404);
+        expect(resultError.e).toEqual("You have already upvoted it.");
+    });
 
 
-    // it('Add downvote to a product', async () => {
-    //     await dropDatabase();
-    //     const products = database.getProductsCollection()
-    //     const user = await createUser();
-    //     const text = "NICE TEST!";
-    //     const product = {
-    //         productName: uuid4(),
-    //         price: 300,
-    //         initialStock: 5,
-    //         description: uuid4(),
-    //         dues: 3,
-    //         owner: user.mail,
-    //         timestamp: Math.trunc((new Date()).getTime()/1000),
-    //     }
-    //     const resultPost = await axios.post("http://localhost:" + settings.port + "/publish", product);
-    //     expect(resultPost.status).toEqual(200);
-    //     const resultPost2 = await axios.post("http://localhost:" + settings.port +"/product/"+resultPost.data+"/comment",{
-    //         user: user.mail,
-    //         text: text
-    //     });
-    //     expect(resultPost2.status).toEqual(200);
-    //     const productCommented = await products.findOne({productKey: resultPost.data});
-    //     expect(productCommented.comments.length).toEqual(1);
-    //     expect(productCommented.comments[0].text).toEqual(text);
-    //     const resultPost3 = await axios.post("http://localhost:" + settings.port +"/product/"+resultPost.data+"/comment/downvote/0",{
-    //         user: user.mail
-    //     });
-    //     expect(resultPost3.status).toEqual(200);
-    //     const productCommented2 = await products.findOne({productKey: resultPost.data});
-    //     expect(productCommented2.comments.length).toEqual(1);
-    //     expect(productCommented2.comments[0].points).toEqual(-1);
-    //     expect(productCommented2.comments[0].voters.indexOf(user.mail)).toBeGreaterThanOrEqual(0);
-    // });
-
-
+    it('Add downvote to a subcomment', async () => {
+        await dropDatabase();
+        const products = database.getProductsCollection()
+        const user = await createUser();
+        const text = "NICE TEST!";
+        const product = {
+            productName: uuid4(),
+            price: 300,
+            initialStock: 5,
+            description: uuid4(),
+            dues: 3,
+            owner: user.mail,
+            timestamp: Math.trunc((new Date()).getTime()/1000),
+        }
+        const resultPost = await axios.post("http://localhost:" + settings.port + "/publish", product);
+        expect(resultPost.status).toEqual(200);
+        const resultPost2 = await axios.post("http://localhost:" + settings.port +"/product/"+resultPost.data+"/comment",{
+            user: user.mail,
+            text: text
+        });
+        expect(resultPost2.status).toEqual(200);
+        const productCommented = await products.findOne({productKey: resultPost.data});
+        expect(productCommented.comments.length).toEqual(1);
+        expect(productCommented.comments[0].text).toEqual(text);
+        const resultPost3 = await axios.post("http://localhost:" + settings.port +"/product/"+resultPost.data+"/subcomment/0",{
+            user: user.mail,
+            text: "NICE SUB COMMENT"
+        });
+        expect(resultPost3.status).toEqual(200);
+        const productCommented2 = await products.findOne({productKey: resultPost.data});
+        expect(productCommented2.comments[0].subcomments.length).toEqual(1);
+        expect(productCommented2.comments[0].subcomments[0].text).toEqual("NICE SUB COMMENT");
+        const resultPost4 = await axios.post("http://localhost:" + settings.port +"/product/"+resultPost.data+"/subcomment/vote/downvote/0/0",{
+            user: user.mail
+        });
+        expect(resultPost4.status).toEqual(200);
+        const productCommented3 = await products.findOne({productKey: resultPost.data});
+        expect(productCommented3.comments[0].subcomments.length).toEqual(1);
+        expect(productCommented3.comments[0].subcomments[0].points).toEqual(-1);
+        expect(productCommented3.comments[0].subcomments[0].voters.indexOf(user.mail)).toBeGreaterThanOrEqual(0);
+    });
     
-    // it('Add downvote to a product which already has it', async () => {
-    //     await dropDatabase();
-    //     const products = database.getProductsCollection()
-    //     const user = await createUser();
-    //     const text = "NICE TEST!";
-    //     const product = {
-    //         productName: uuid4(),
-    //         price: 300,
-    //         initialStock: 5,
-    //         description: uuid4(),
-    //         dues: 3,
-    //         owner: user.mail,
-    //         timestamp: Math.trunc((new Date()).getTime()/1000),
-    //     }
-    //     const resultPost = await axios.post("http://localhost:" + settings.port + "/publish", product);
-    //     expect(resultPost.status).toEqual(200);
-    //     const resultPost2 = await axios.post("http://localhost:" + settings.port +"/product/"+resultPost.data+"/comment",{
-    //         user: user.mail,
-    //         text: text
-    //     });
-    //     expect(resultPost2.status).toEqual(200);
-    //     const productCommented = await products.findOne({productKey: resultPost.data});
-    //     expect(productCommented.comments.length).toEqual(1);
-    //     expect(productCommented.comments[0].text).toEqual(text);
-    //     const resultPost3 = await axios.post("http://localhost:" + settings.port +"/product/"+resultPost.data+"/comment/downvote/0",{
-    //         user: user.mail
-    //     });
-    //     expect(resultPost3.status).toEqual(200);
-    //     const productCommented2 = await products.findOne({productKey: resultPost.data});
-    //     expect(productCommented2.comments.length).toEqual(1);
-    //     expect(productCommented2.comments[0].points).toEqual(-1);
-    //     expect(productCommented2.comments[0].voters.indexOf(user.mail)).toBeGreaterThanOrEqual(0);
-    //     const resultError = await common.getErrorAsyncRequest(axios.post("http://localhost:" + settings.port +"/product/"+resultPost.data+"/comment/downvote/0",{
-    //         user: user.mail
-    //     }));
-    //     expect(resultError.status).toEqual(404);
-    //     expect(resultError.e).toEqual("You have already upvoted it.");
-    // });
+    it('Add downvote to a subcomment and it already has it', async () => {
+        await dropDatabase();
+        const products = database.getProductsCollection()
+        const user = await createUser();
+        const text = "NICE TEST!";
+        const product = {
+            productName: uuid4(),
+            price: 300,
+            initialStock: 5,
+            description: uuid4(),
+            dues: 3,
+            owner: user.mail,
+            timestamp: Math.trunc((new Date()).getTime()/1000),
+        }
+        const resultPost = await axios.post("http://localhost:" + settings.port + "/publish", product);
+        expect(resultPost.status).toEqual(200);
+        const resultPost2 = await axios.post("http://localhost:" + settings.port +"/product/"+resultPost.data+"/comment",{
+            user: user.mail,
+            text: text
+        });
+        expect(resultPost2.status).toEqual(200);
+        const productCommented = await products.findOne({productKey: resultPost.data});
+        expect(productCommented.comments.length).toEqual(1);
+        expect(productCommented.comments[0].text).toEqual(text);
+        const resultPost3 = await axios.post("http://localhost:" + settings.port +"/product/"+resultPost.data+"/subcomment/0",{
+            user: user.mail,
+            text: "NICE SUB COMMENT"
+        });
+        expect(resultPost3.status).toEqual(200);
+        const productCommented2 = await products.findOne({productKey: resultPost.data});
+        expect(productCommented2.comments[0].subcomments.length).toEqual(1);
+        expect(productCommented2.comments[0].subcomments[0].text).toEqual("NICE SUB COMMENT");
+        const resultPost4 = await axios.post("http://localhost:" + settings.port +"/product/"+resultPost.data+"/subcomment/vote/downvote/0/0",{
+            user: user.mail
+        });
+        expect(resultPost4.status).toEqual(200);
+        const productCommented3 = await products.findOne({productKey: resultPost.data});
+        expect(productCommented3.comments[0].subcomments.length).toEqual(1);
+        expect(productCommented3.comments[0].subcomments[0].points).toEqual(-1);
+        expect(productCommented3.comments[0].subcomments[0].voters.indexOf(user.mail)).toBeGreaterThanOrEqual(0);
+        const resultError = await common.getErrorAsyncRequest(axios.post("http://localhost:" + settings.port +"/product/"+resultPost.data+"/subcomment/vote/downvote/0/0",{
+            user: user.mail
+        }));
+        expect(resultError.status).toEqual(404);
+        expect(resultError.e).toEqual("You have already upvoted it.");
+    });
 });
 
 async function createUser(){
