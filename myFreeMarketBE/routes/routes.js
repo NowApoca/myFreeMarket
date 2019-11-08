@@ -25,10 +25,10 @@ router.post("/logup", logController.logUp);
 
 router.get("/products", productController.getProducts);
 router.post("/publish", validateProductParameters, productController.publish);
-router.get("/product/:id", checkProductExist, productController.getProductData);
-router.post("/product/pause/:id", checkProductExist, productController.pauseProduct);
-router.post("/product/unpause/:id", checkProductExist, productController.unpauseProduct);
-router.post("/product/delete/:id", checkProductExist, productController.deleteProduct);
+router.get("/product/:productId", checkProductExist, productController.getProductData);
+router.post("/product/pause/:productId", checkProductExist, productController.pauseProduct);
+router.post("/product/unpause/:productId", checkProductExist, productController.unpauseProduct);
+router.post("/product/delete/:productId", checkProductExist, productController.deleteProduct);
 router.post("/product/purchase/:productId/:purchaser", productController.purchaseProduct);
 router.post("/product/:productId/comment", productController.commentProduct);
 router.post("/product/:productId/comment/vote/:action/:numberComment", productController.voteCommentProduct);
@@ -38,10 +38,9 @@ router.post("/product/:productId/change/parameter/:parameter/value/:value", vali
 
 // /* User Apis*/
 
-// router.get("/user/:user/products/", checkUserExist, userController.getUserProducts);
-// router.get("/user/:user/sales", userController.getUserSales);
-// router.get("/user/:user/purchases", userController.getUserPurchases);
-// router.get("/user/:user/fav/products", userController.getUserFavProducts);
+router.get("/user/:user/products", checkUserExist, userController.getUserProducts);
+router.get("/user/:user/products/movements/:action", checkUserExist, userController.getUserProductsMovements);
+router.get("/user/:user/fav/products", checkUserExist, userController.getUserFavProducts);
 // router.get("/user/:user/data", userController.getUserData);
 // router.get("/user/:user/fav/sellers", userController.getUserFavSellers);
 // router.get("/user/:user/historic/movements", userController.getUserHistoricMovement);
@@ -51,12 +50,13 @@ router.post("/product/:productId/change/parameter/:parameter/value/:value", vali
 // router.post("/user/:user/change/data/:data/topic/:topic", userController.changeUserData);
 // router.post("/user/:user/change/level/:level", userController.changeUserLevel);
 // router.post("/user/:user/notifications", userController.setNotifications);
-// router.post("/user/:user/fav/action/:action/:product", userController.getUserProducts);
+router.post("/user/:user/fav/action/:action/:productId", checkUserExist, checkProductExist, userController.favProduct);
 // router.post("/user/:user/fav/action/:action/:seller", userController.getUserProducts);
 // router.post("/user/:user/ban", userController.getUserProducts);
-// // router.post("/user/:user/enable/2FA", userController.getUserProducts);
-// // router.post("/user/:user/add/deposit/address", userController.getUserProducts);
-// // router.post("/user/:user/delete/ip/:ip", userController.getUserProducts);
+
+// router.post("/user/:user/enable/2FA", userController.getUserProducts);
+// router.post("/user/:user/add/deposit/address", userController.getUserProducts);
+// router.post("/user/:user/delete/ip/:ip", userController.getUserProducts);
 
 // /* Complains Apis*/
 

@@ -1,55 +1,27 @@
 const database = require(__dirname + "/../database/database");
 
 async function getUserProducts(req, res){
-    const { user } = res.locals
+    const { user } = res.locals;
     const products = database.getProductsCollection();
     // An optimization is save product keys in user and find it.
-    const queryResult = await products.find({owner: req.params.user});
-    let output = {
-        products: [],
-    };
+    const queryResult = await products.find({owner: user.mail});
+    let output = [];
     await queryResult.forEach(function(item){
         if(item){
-            output.result = true;
-            output.products.push(item);
-        }else{
-            output.result = false;
+            output.push(item);
         }
     })
 	res.status(200).json(output);
 }
 
-async function getUserSales(req, res){
+async function getUserProductsMovements(req, res){
     const { user } = res.locals
     const products = database.getProductsCollection();
-    const queryResult = await products.aggregate([{$match: {productKey: {$in:user.sales}}}])
-    let output = {
-        products: [],
-    };
+    const queryResult = await products.aggregate([{$match: {productKey: {$in: user[req.params.action]}}}])
+    let output = [];
     await queryResult.forEach(function(item){
         if(item){
-            output.result = true;
-            output.products.push(item);
-        }else{
-            output.result = false;
-        }
-    })
-	res.status(200).json(output);
-}
-
-async function getUserPurchases(req, res){
-    const { user } = res.locals
-    const products = database.getProductsCollection();
-    const queryResult = await products.aggregate([{$match: {productKey: {$in:user.purchases}}}])
-    let output = {
-        products: [],
-    };
-    await queryResult.forEach(function(item){
-        if(item){
-            output.result = true;
-            output.products.push(item);
-        }else{
-            output.result = false;
+            output.push(item);
         }
     })
 	res.status(200).json(output);
@@ -59,15 +31,10 @@ async function getUserFavProducts(req, res){
     const { user } = res.locals
     const products = database.getProductsCollection();
     const queryResult = await products.aggregate([{$match: {productKey: {$in:user.favProducts}}}])
-    let output = {
-        products: [],
-    };
+    let output = [];
     await queryResult.forEach(function(item){
         if(item){
-            output.result = true;
-            output.products.push(item);
-        }else{
-            output.result = false;
+            output.push(item);
         }
     })
 	res.status(200).json(output);
@@ -155,12 +122,13 @@ async function favSeller(req, res){
 
 async function favProduct(req, res){
     const { user } = res.locals;
+    const users = database.getUsersCollection();
     if(req.params.action == "unfav"){
-        user.favSellers.splice(user.favProducts.indexOf(req.params.product),1);
+        user.favProducts.splice(user.favProducts.indexOf(req.params.product),1);
     }else{
-        user.favSellers.push(req.params.product);
+        user.favProducts.push(req.params.productId);
     }
-    await users.updateOne({owner: req.params.user},{"$set":{notifications: user.favProducts}})
+    await users.updateOne({mail: user.mail},{"$set":{favProducts: user.favProducts}})
     res.status(200).json("Done.");
     
 }
@@ -180,8 +148,7 @@ async function banUser(req, res){
 
 module.exports = {
     getUserProducts,
-    getUserSales,
-    getUserPurchases,
+    getUserProductsMovements,
     getUserFavProducts,
     getUserData,
     getUserFavSellers,

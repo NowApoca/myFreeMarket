@@ -1,30 +1,27 @@
 const database = require(__dirname + "/../src/database/database");
 
 
-async function checkUserExist(){
+async function checkUserExist(req, res, next){
     const users = database.getUsersCollection();
-    const user = await users.findOne({owner: req.params.user});
-    if(!user){
+    const user = await users.findOne({mail: req.params.user});
+    if(user === null){
         res.statusMessage = "User does not exist."
-        res.status(404);
+        res.status(404).end();
+        return;
     }
-    res.locals = {
-        user: user
-    }
+    res.locals["user"] = user;
     next();
 }
 
 async function checkProductExist(req, res, next){
     const products = database.getProductsCollection();
-    const product = await products.findOne({productKey: req.params.id});
-    if(!product){
-        res.statusMessage = "Product with id '"+ req.params.id +"' does not exist."
+    const product = await products.findOne({productKey: req.params.productId});
+    if(product === null){
+        res.statusMessage = "Product with id '"+ req.params.productId +"' does not exist."
         res.status(404).end();
         return;
     }
-    res.locals = {
-        productData: product
-    }
+    res.locals["productData"] = product;
     next();
 }
 

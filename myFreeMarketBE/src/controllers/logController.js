@@ -42,6 +42,7 @@ async function logUp(req, res){
         balance: 100,
         passwords:[],
         favProducts: [],
+        favSellers: [],
         sales: [],
         purchases: [],
         productsPublished: [],
