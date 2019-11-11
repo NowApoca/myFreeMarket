@@ -4,10 +4,12 @@ const router = express.Router();
 const logController = require(__dirname + "/../src/controllers/logController");
 const productController = require(__dirname + "/../src/controllers/productController");
 const userController = require(__dirname + "/../src/controllers/userController");
+const complianController = require(__dirname + "/../src/controllers/complainController");
 const monitorController = require("../src/controllers//monitorController");
 const { checkUserExist, validateProductParameters,
      checkProductExist, validateProductchangeParameters,
-     checkLevel } = require("./middleware")
+     checkLevel, voteComplainMiddleware,
+     voteCommentComplainMiddleware } = require("./middleware")
 /* Home */
 
 router.get("/", function(req,res){
@@ -61,13 +63,13 @@ router.post("/user/:user/ban/:banned", checkLevel, checkUserExist, userControlle
 
 // /* Complains Apis*/
 
-router.get("/complain/by/colour/:colour", userController.getUserProducts);
-router.post("/complain/:complainID/change/colour/:colour", userController.getUserProducts);
-router.post("/complain/close/:complainID", userController.getUserProducts);
-router.post("/complain/and/point/:complainID", userController.getUserProducts);
-router.post("/complain/:complainID/comment", userController.getUserProducts);
-router.post("/complain/:complainID/subcomment", userController.getUserProducts);
-router.post("/complain/from/user/:user", userController.getUserProducts);
+router.get("/complain/by/colour/:colour", complianController.getComplainsByColour);
+router.post("/complain/:complainId/change/colour/:colour", complianController.setComplainColour);
+router.post("/complain/close/:complainId/user/:user", complianController.closeComplain);
+router.post("/complain/comment/:complainId/user/:user", complianController.commentComplain);
+router.post("/complain/:complainId/vote/:action/user/:user", checkUserExist, voteComplainMiddleware, complianController.voteComplain);
+router.post("/complain/:complainId/vote/:action/user/:user/comment/:numberComment", checkUserExist, voteCommentComplainMiddleware, complianController.voteComplainComment);
+router.post("/complain/new/user/:user", checkUserExist, complianController.newComplain);
 
 // /* Balance Apis*/
 

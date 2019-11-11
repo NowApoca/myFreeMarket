@@ -44,6 +44,7 @@ async function logUp(req, res){
         favProducts: [],
         favSellers: [],
         sales: [],
+        complains: [],
         level: 0,
         purchases: [],
         productsPublished: [],

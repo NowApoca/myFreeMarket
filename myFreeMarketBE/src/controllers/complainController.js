@@ -12,13 +12,15 @@ async function newComplain(req, res){
         tag: req.body.tag,
         comments: [],
         status: "unsolved",
-        complainer: req.body.complainer,
+        complainer: req.params.user,
         helper: "",
-        complainID: uuid,
+        complainKey: uuid,
+        points: 0,
+        voters: [],
         timestamp: Math.trunc((new Date()).getTime()/1000),
     })
     user.complains.push(uuid)
-    await users.updateOne({mail: res.body.complainer},{$set: {complains: user.complains}})
+    await users.updateOne({mail: req.params.user},{$set: {complains: user.complains}})
 	res.status(200).json("Done.");
 }
 
@@ -32,56 +34,89 @@ async function getComplainsByColour(req, res){
     res.status(200).json(output);
 }
 
-async function changeComplainColour(req, res){
+async function setComplainColour(req, res){
     const complains = database.getComplainsCollection();
-    await complains.updateOne({complainID: req.params.complainID},{$set:{colour:req.params.colour}});
-    res.status(200).json();
+    await complains.updateOne({complainKey: req.params.complainId},{$set:{colour:req.params.colour}});
+    res.status(200).json("Done.");
 }
 
 async function closeComplain(req, res){
     const complains = database.getComplainsCollection();
-    await complains.updateOne({complainID: req.params.complainID},{$set:{status:"close", helper: req.body.helper, 
+    await complains.updateOne({complainKey: req.params.complainId},{$set:{status:"closed", helper: req.params.user, 
     closeTimestamp: Math.trunc((new Date()).getTime()/1000)}});
-    res.status(200).json();
+    res.status(200).json("Done.");
 }
 
 async function commentComplain(req, res){
-    const complains = database.getComplainsCollection();
-    const complain = await complains.findOne({complainID: req.params.complainID});
-    complain.comments.push(req.body.comment);
-    await complains.updateOne({complainID: req.params.complainID},{$set:{comments: complain.comments}});
-    res.status(200).json();
+    const complains =  database.getComplainsCollection();
+    const complain = await complains.findOne({complainKey: req.params.complainId});
+    complain.comments.push({
+        text: req.body.text,
+        timestamp: Math.trunc((new Date()).getTime()/1000),
+        user: req.params.user,
+        points: 0,
+        voters: [],
+    })
+    await complains.updateOne({complainKey: req.params.complainId}, {"$set": {comments: complain.comments}});
+	res.status(200).json("Done.");
 }
 
-async function subcommentComplain(req, res){
+async function voteComplainComment(req, res){
     const complains = database.getComplainsCollection();
-    const complain = await complains.findOne({complainID: req.params.complainID});
-    complain.comments[req.body.commentIndex].push(req.body.subcomment);
-    await complains.updateOne({complainID: req.params.complainID},{$set:{comments: complain.comments}});
-    res.status(200).json();
-}
-
-async function upvoteComplain(req, res){
-    const complains = database.getComplainsCollection();
-    if(res.locals.voted){
-        await complains.updateOne({complainID: req.params.complainID},{$inc:{points: -1}});
+    const { user, voted, comment, numberComment } = res.locals;
+    const complain = await complains.findOne({complainKey: req.params.complainId});
+    if(voted){
+        if(req.params.action == "upvote"){
+            comment.points--;
+        }else{
+            comment.points++;
+        }
+        comment.voters.splice(comment.voters.indexOf(user.mail),1);
     }else{
-        const complain = await complains.findOne({complainID: req.params.complainID})
-        complain.upvoters.push(req.body.user);
-        const complain = await complains.updateOne({complainID: req.params.complainID},{$set: {upvoters: complain.upvoters}})
-        await complains.updateOne({complainID: req.params.complainID},{$inc:{points: 1}});
+        if(req.params.action == "upvote"){
+            comment.points++;
+        }else{
+            comment.points--;
+        }
+        comment.voters.push(user.mail);
     }
-    res.status(200).json();
+    complain.comments[numberComment] = comment;
+    await complains.updateOne({complainKey: req.params.complainId},{$set:{comments: complain.comments}});
+    res.status(200).json("Done.");
+}
+
+async function voteComplain(req, res){
+    const { user } = res.locals;
+    const complains = database.getComplainsCollection();
+    const complain = await complains.findOne({complainKey: req.params.complainId})
+    if(req.params.action == "upvote"){
+        if(res.locals.voted){
+            complain.voters.splice(complain.voters.indexOf(user.mail),1);
+            await complains.updateOne({complainKey: req.params.complainId},{$inc:{points: -1}});
+        }else{
+            complain.voters.push(user.mail);
+            await complains.updateOne({complainKey: req.params.complainId},{$set: {voters: complain.voters}, $inc:{points: 1}})
+        }
+    }else{
+        if(res.locals.voted){
+            complain.voters.splice(complain.voters.indexOf(user.mail),1);
+            await complains.updateOne({complainKey: req.params.complainId},{$inc:{points: 1}});
+        }else{
+            complain.voters.push(user.mail);
+            await complains.updateOne({complainKey: req.params.complainId},{$set: {voters: complain.voters}, $inc:{points: -1}})
+        }
+
+    }
+    res.status(200).json("Done.");
 }
 
 module.exports = {
     newComplain,
     getComplainsByColour,
-    changeComplainColour,
+    setComplainColour,
     closeComplain,
     commentComplain,
-    subcommentComplain,
-    upvoteComplain,
-    undoUpvoteComplain,
+    voteComplainComment,
+    voteComplain,
 }
 

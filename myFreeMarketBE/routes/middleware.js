@@ -1,6 +1,5 @@
 const database = require(__dirname + "/../src/database/database");
 
-
 async function checkUserExist(req, res, next){
     const users = database.getUsersCollection();
     const user = await users.findOne({mail: req.params.user});
@@ -21,6 +20,35 @@ async function checkLevel(req, res, next){
         res.status(404).end();
         return;
     }
+    next();
+}
+
+async function voteComplainMiddleware(req, res, next){
+    const users = database.getUsersCollection();
+    const complains = database.getComplainsCollection();
+    const user = await users.findOne({mail: req.params.user});
+    const complain = await complains.findOne({complainKey: req.params.complainId});
+    if(complain.voters.indexOf(user.mail) < 0){
+        res.locals.voted = false;
+    }else{
+        res.locals.voted = true;
+    }
+    next();
+}
+
+async function voteCommentComplainMiddleware(req, res, next){
+    const users = database.getUsersCollection();
+    const complains = database.getComplainsCollection();
+    const user = await users.findOne({mail: req.params.user});
+    const complain = await complains.findOne({complainKey: req.params.complainId});
+    const comment = complain.comments[parseInt(req.params.numberComment)]
+    if(comment.voters.indexOf(user.mail) < 0){
+        res.locals.voted = false;
+    }else{
+        res.locals.voted = true;
+    }
+    res.locals.comment = comment;
+    res.locals.numberComment = parseInt(req.params.numberComment)
     next();
 }
 
@@ -71,8 +99,10 @@ async function validateProductchangeParameters(req, res, next){
 }
 
 module.exports = {
-    checkUserExist: checkUserExist,
-    checkLevel: checkLevel,
+    checkUserExist,
+    checkLevel,
+    voteComplainMiddleware,
+    voteCommentComplainMiddleware,
     validateProductParameters,
     checkProductExist,
     validateProductchangeParameters,
