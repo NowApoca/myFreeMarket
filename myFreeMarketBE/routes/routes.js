@@ -5,7 +5,9 @@ const logController = require(__dirname + "/../src/controllers/logController");
 const productController = require(__dirname + "/../src/controllers/productController");
 const userController = require(__dirname + "/../src/controllers/userController");
 const monitorController = require("../src/controllers//monitorController");
-const { checkUserExist, validateProductParameters, checkProductExist, validateProductchangeParameters } = require("./middleware")
+const { checkUserExist, validateProductParameters,
+     checkProductExist, validateProductchangeParameters,
+     checkLevel } = require("./middleware")
 /* Home */
 
 router.get("/", function(req,res){
@@ -41,32 +43,31 @@ router.post("/product/:productId/change/parameter/:parameter/value/:value", vali
 router.get("/user/:user/products", checkUserExist, userController.getUserProducts);
 router.get("/user/:user/products/movements/:action", checkUserExist, userController.getUserProductsMovements);
 router.get("/user/:user/fav/products", checkUserExist, userController.getUserFavProducts);
-// router.get("/user/:user/data", userController.getUserData);
-// router.get("/user/:user/fav/sellers", userController.getUserFavSellers);
-// router.get("/user/:user/historic/movements", userController.getUserHistoricMovement);
+router.get("/user/:user/fav/sellers", userController.getUserFavSellers);
+router.get("/user/:user/data", checkUserExist, userController.getUserData);
 
-// router.post("/user/:user/change/password", checkUserExist, userController.setPassword);
-// router.post("/user/:user/change/description", userController.changeDescription);
-// router.post("/user/:user/change/data/:data/topic/:topic", userController.changeUserData);
-// router.post("/user/:user/change/level/:level", userController.changeUserLevel);
+router.post("/user/:user/change/password", checkUserExist, userController.setPassword);
+router.post("/user/:user/change/description", userController.setDescription);
+router.post("/user/:user/change/level/:level", checkLevel, userController.setUserLevel);
+router.post("/user/:user/fav/product/action/:action/:productId", checkUserExist, checkProductExist, userController.favProduct);
+router.post("/user/:user/fav/seller/action/:action/:favSeller", checkUserExist, userController.favSeller);
+router.post("/user/:user/ban/:banned", checkLevel, checkUserExist, userController.banUser);
+
+// router.post("/user/:user/change/data/:data/topic/:topic", userController.setUserData);
 // router.post("/user/:user/notifications", userController.setNotifications);
-router.post("/user/:user/fav/action/:action/:productId", checkUserExist, checkProductExist, userController.favProduct);
-// router.post("/user/:user/fav/action/:action/:seller", userController.getUserProducts);
-// router.post("/user/:user/ban", userController.getUserProducts);
-
 // router.post("/user/:user/enable/2FA", userController.getUserProducts);
 // router.post("/user/:user/add/deposit/address", userController.getUserProducts);
 // router.post("/user/:user/delete/ip/:ip", userController.getUserProducts);
 
 // /* Complains Apis*/
 
-// router.get("/complain/by/colour/:colour", userController.getUserProducts);
-// router.post("/complain/:complainID/change/colour/:colour", userController.getUserProducts);
-// router.post("/complain/close/:complainID", userController.getUserProducts);
-// router.post("/complain/and/point/:complainID", userController.getUserProducts);
-// router.post("/complain/:complainID/comment", userController.getUserProducts);
-// router.post("/complain/:complainID/subcomment", userController.getUserProducts);
-// router.post("/complain/from/user/:user", userController.getUserProducts);
+router.get("/complain/by/colour/:colour", userController.getUserProducts);
+router.post("/complain/:complainID/change/colour/:colour", userController.getUserProducts);
+router.post("/complain/close/:complainID", userController.getUserProducts);
+router.post("/complain/and/point/:complainID", userController.getUserProducts);
+router.post("/complain/:complainID/comment", userController.getUserProducts);
+router.post("/complain/:complainID/subcomment", userController.getUserProducts);
+router.post("/complain/from/user/:user", userController.getUserProducts);
 
 // /* Balance Apis*/
 

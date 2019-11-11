@@ -13,6 +13,17 @@ async function checkUserExist(req, res, next){
     next();
 }
 
+async function checkLevel(req, res, next){
+    const users = database.getUsersCollection();
+    const user = await users.findOne({mail: req.params.user});
+    if(user.level < 3){
+        res.statusMessage = "User has not enough level account."
+        res.status(404).end();
+        return;
+    }
+    next();
+}
+
 async function checkProductExist(req, res, next){
     const products = database.getProductsCollection();
     const product = await products.findOne({productKey: req.params.productId});
@@ -61,6 +72,7 @@ async function validateProductchangeParameters(req, res, next){
 
 module.exports = {
     checkUserExist: checkUserExist,
+    checkLevel: checkLevel,
     validateProductParameters,
     checkProductExist,
     validateProductchangeParameters,

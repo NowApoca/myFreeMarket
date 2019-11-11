@@ -183,7 +183,7 @@ describe('Products Controller', function() {
         const resultPost = await axios.post("http://localhost:" + settings.port + "/publish", product);
         const productPublished = await products.findOne({owner: seller.mail});
         expect(resultPost.status).toEqual(200);
-        const resultPost2 = await axios.post("http://localhost:" + settings.port + "/user/"+purchaser.mail+"/fav/action/fav/"+productPublished.productKey);
+        const resultPost2 = await axios.post("http://localhost:" + settings.port + "/user/"+purchaser.mail+"/fav/product/action/fav/"+productPublished.productKey);
         expect(resultPost2.status).toEqual(200);
         const resultGet = await axios.get("http://localhost:" + settings.port + "/user/"+purchaser.mail+"/fav/products");
         expect(resultGet.status).toEqual(200);
@@ -201,11 +201,151 @@ describe('Products Controller', function() {
     it('Fav a not existing user', async () => {
         await dropDatabase();
         const user = await createUser();
-        const resultError = await common.getErrorAsyncRequest(axios.post("http://localhost:" + settings.port + "/user/"+user.mail+"/fav/action/fav/"+345));
+        const resultError = await common.getErrorAsyncRequest(axios.post("http://localhost:" + settings.port + "/user/"+user.mail+"/fav/seller/action/fav/"+345));
         expect(resultError.status).toEqual(404);
-        expect(resultError.e).toEqual("Product with id '"+345+"' does not exist.");
+        expect(resultError.e).toEqual("No existing user.");
     });
 
+    it('Get user Data', async () => {
+        await dropDatabase();
+        const user = await createUser();
+        const resultGet = await axios.get("http://localhost:" + settings.port + "/user/"+user.mail+"/data");
+        expect(resultGet.status).toEqual(200);
+        expect(resultGet.data).toEqual({
+            balance: 100,
+            name: user.name,
+            mail: user.mail
+        });
+    });
+
+    it('Fav a seller user that does not exist', async () => {
+        await dropDatabase();
+        const user = await createUser();
+        const user2 = await createUser();
+        const resultError = await common.getErrorAsyncRequest(axios.post("http://localhost:" + settings.port + "/user/"+user.mail+"/fav/seller/action/fav/"+user2.mail+4));
+        expect(resultError.status).toEqual(404);
+        expect(resultError.e).toEqual("No existing user.");
+    });
+
+    it('Fav a seller user', async () => {
+        await dropDatabase();
+        const user = await createUser();
+        const user2 = await createUser();
+        const resultGet = await axios.post("http://localhost:" + settings.port + "/user/"+user.mail+"/fav/seller/action/fav/"+user2.mail);
+        expect(resultGet.status).toEqual(200);
+        expect(resultGet.data).toEqual("Done.");
+        const users = database.getUsersCollection();
+        const userUpdated = await users.findOne({mail: user.mail});
+        expect(userUpdated.favSellers).toEqual([user2.mail]);
+    });
+
+    it('Change password', async () => {
+        await dropDatabase();
+        const user = await createUser();
+        const password = "newpassword";
+        const resultPost = await axios.post("http://localhost:" + settings.port + "/user/"+user.mail+"/change/password",{
+            newPassword: password,
+        });
+        expect(resultPost.status).toEqual(200);
+        expect(resultPost.data).toEqual("Done.");
+        const users = database.getUsersCollection();
+        const userUpdated = await users.findOne({mail: user.mail});
+        expect(userUpdated.password).toEqual(password);
+        expect(userUpdated.historicPasswords).toEqual([user.password, password]);
+    });
+
+    it('Change password and repeat it', async () => {
+        await dropDatabase();
+        const user = await createUser();
+        const password = "newpassword";
+        const resultPost = await axios.post("http://localhost:" + settings.port + "/user/"+user.mail+"/change/password",{
+            newPassword: password,
+        });
+        expect(resultPost.status).toEqual(200);
+        expect(resultPost.data).toEqual("Done.");
+        const users = database.getUsersCollection();
+        const userUpdated = await users.findOne({mail: user.mail});
+        expect(userUpdated.password).toEqual(password);
+        expect(userUpdated.historicPasswords).toEqual([user.password, password]);
+
+        const resultError = await common.getErrorAsyncRequest(axios.post("http://localhost:" + settings.port + "/user/"+user.mail+"/change/password",{
+            newPassword: password,
+        }));
+        expect(resultError.status).toEqual(404);
+        expect(resultError.e).toEqual("Password already used.");
+    });
+
+    it('Change description', async () => {
+        await dropDatabase();
+        const user = await createUser();
+        const description = "new decription";
+        const resultPost = await axios.post("http://localhost:" + settings.port + "/user/"+user.mail+"/change/description",{
+            description: description,
+        });
+        expect(resultPost.status).toEqual(200);
+        expect(resultPost.data).toEqual("Done.");
+        const users = database.getUsersCollection();
+        const userUpdated = await users.findOne({mail: user.mail});
+        expect(userUpdated.description).toEqual(description);
+    });
+
+    it('Change level', async () => {
+        await dropDatabase();
+        const users = database.getUsersCollection();
+        const user = await createUser();
+        await users.updateOne({mail: user.mail},{"$set":{level: 4}})
+        const resultPost = await axios.post("http://localhost:" + settings.port + "/user/"+user.mail+"/change/level/" + 1);
+        expect(resultPost.status).toEqual(200);
+        expect(resultPost.data).toEqual("Done.");
+        const userUpdated = await users.findOne({mail: user.mail});
+        expect(userUpdated.level).toEqual(1);
+    });
+
+    it('Change level with a non level account', async () => {
+        await dropDatabase();
+        const users = database.getUsersCollection();
+        const user = await createUser();
+        const resultPost = await common.getErrorAsyncRequest(axios.post("http://localhost:" + settings.port + "/user/"+user.mail+"/change/level/" + 1));
+        expect(resultPost.status).toEqual(404);
+        expect(resultPost.e).toEqual("User has not enough level account.");
+        const userUpdated = await users.findOne({mail: user.mail});
+        expect(userUpdated.level).toEqual(0);
+    });
+
+    it('Ban user', async () => {
+        await dropDatabase();
+        const users = database.getUsersCollection();
+        const user = await createUser();
+        const user2 = await createUser();
+        await users.updateOne({mail: user.mail},{"$set":{level: 4}})
+        const resultPost = await axios.post("http://localhost:" + settings.port + "/user/"+user.mail+"/ban/" + user2.mail, {
+            expirationBan: Math.trunc((new Date()).getTime()/1000),
+            reason: "For Testing",
+            banned: user2.mail,
+        });
+        expect(resultPost.status).toEqual(200);
+        expect(resultPost.data).toEqual("Done.");
+        const userUpdated = await users.findOne({mail: user2.mail});
+        expect(userUpdated.status).toEqual({
+            available: false,
+            expirationBan: Math.trunc((new Date()).getTime()/1000),
+            reason: "For Testing",
+            banned: user2.mail,
+        });
+    });
+
+    it('Ban user with a non level account', async () => {
+        await dropDatabase();
+        const user = await createUser();
+        const user2 = await createUser();
+        const resultError = await common.getErrorAsyncRequest(axios.post("http://localhost:" + settings.port + "/user/"+user.mail+"/ban/" + user2.mail, {
+            expirationBan: Math.trunc((new Date()).getTime()/1000),
+            reason: "For Testing",
+            banned: user2.mail,
+        }));
+        expect(resultError.status).toEqual(404);
+        expect(resultError.e).toEqual("User has not enough level account.");
+    });
 });
 
 async function createUser(){

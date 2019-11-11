@@ -43,49 +43,42 @@ async function getUserFavProducts(req, res){
 async function getUserData(req, res){
     const { user } = res.locals;
     const output = {
-        balance: user.balance
+        balance: user.balance,
+        name: user.name,
+        mail: user.mail
     }
 	res.status(200).json(output);
 }
 
 async function getUserFavSellers(req, res){
     const { user } = res.locals
-    const products = database.getProductsCollection();
-    const queryResult = await products.aggregate([{$match: {productKey: {$in:user.favSellers}}}])
-    let output = {
-        products: [],
-    };
+    const users = database.getProductsCollection();
+    const queryResult = await users.aggregate([{$match: {mail: {$in:user.favSellers}}}])
+    let output = [];
     await queryResult.forEach(function(item){
         if(item){
-            output.result = true;
-            output.products.push(item);
-        }else{
-            output.result = false;
+            output.push(item);
         }
     })
 	res.status(200).json(output);
 }
 
-async function getUserHistoricMovement(req, res){
-    const { user } = res.locals;
-    const output = user.movements;
-	res.status(200).json(output);
-}
-
 async function setPassword(req, res){
     const { user } = res.locals;
-    if(user.historicPasswords.indexOf(req.body.newPassword) > 0){
-        user.historicPasswords.push(user.password);
-        await users.updateOne({owner: req.params.user},{"$set":{password: req.params.newPassword, passwords: user.passwords}})
+    if(user.historicPasswords.indexOf(req.body.newPassword) < 0){
+        const users = database.getUsersCollection();
+        user.historicPasswords.push(user.password, req.body.newPassword);
+        await users.updateOne({mail: req.params.user},{"$set":{password: req.body.newPassword, historicPasswords: user.historicPasswords}})
         res.status(200).json("Done.");
     }
-    res.status(404).json("Password already used.");
+    res.statusMessage = "Password already used."
+    res.status(404).end();
 }
 
 async function setDescription(req, res){
-    await users.updateOne({owner: req.params.user},{"$set":{description: req.body.description}})
+    const users = database.getUsersCollection();
+    await users.updateOne({mail: req.params.user},{"$set":{description: req.body.description}})
     res.status(200).json("Done.");
-    
 }
 
 async function setUserData(req, res){
@@ -93,11 +86,11 @@ async function setUserData(req, res){
     user[req.params.topic] = req.params.data
     await users.updateOne({owner: req.params.user},{"$set":{description: req.body.description}})
     res.status(200).json("Done.");
-    
 }
 
 async function setUserLevel(req, res){
-    await users.updateOne({owner: req.params.user},{"$set":{level: parseInt(req.params.level)}})
+    const users = database.getUsersCollection();
+    await users.updateOne({mail: req.params.user},{"$set":{level: parseInt(req.params.level)}});
     res.status(200).json("Done.");
     
 }
@@ -110,12 +103,19 @@ async function setNotifications(req, res){
 
 async function favSeller(req, res){
     const { user } = res.locals;
-    if(req.params.action == "unfav"){
-        user.favSellers.splice(user.favSellers.indexOf(req.params.seller),1);
-    }else{
-        user.favSellers.push(req.params.seller);
+    const users = database.getUsersCollection();
+    const seller = await users.findOne({mail: req.params.favSeller})
+    if(seller === null){
+        res.statusMessage = "No existing user."
+        res.status(404).end()
+        return;
     }
-    await users.updateOne({owner: req.params.user},{"$set":{favSellers: user.favSellers}})
+    if(req.params.action == "unfav"){
+        user.favSellers.splice(user.favSellers.indexOf(req.params.favSeller),1);
+    }else{
+        user.favSellers.push(req.params.favSeller);
+    }
+    await users.updateOne({mail: user.mail},{"$set":{favSellers: user.favSellers}})
     res.status(200).json("Done.");
     
 }
@@ -135,15 +135,14 @@ async function favProduct(req, res){
 
 async function banUser(req, res){
     const { user } = res.locals;
-    user.status = {
+    const users = database.getUsersCollection();
+    await users.updateOne({mail: req.params.banned},{"$set":{status: {
         available: false,
         expirationBan: req.body.expirationBan,
         reason: req.body.reason,
-        banner: req.body.banner,
-    }
-    await users.updateOne({owner: req.params.user},{"$set":{status: user.status}})
+        banned: req.params.banned,
+    }}})
     res.status(200).json("Done.");
-    
 }
 
 module.exports = {
@@ -152,7 +151,6 @@ module.exports = {
     getUserFavProducts,
     getUserData,
     getUserFavSellers,
-    getUserHistoricMovement,
     setPassword,
     setDescription,
     setUserData,
