@@ -15,9 +15,8 @@ async function initialize(database){
     db = dataBase.db;
     client = dataBase.client;
     collections = {
-        users: db.collection("users"),
-        products: db.collection("products"),
-        complains: db.collection("complains"),
+        transactions: db.collection("transactions"),
+        addresses: db.collection("addresses")
     };
 }
 
@@ -25,22 +24,17 @@ function getClient(){
     return client;
 }
 
-function getUsersCollection(){
-    return collections.users
+function getTransactionsCollection(){
+    return collections.transactions
 }
 
-function getProductsCollection(){
-    return collections.products
-}
-
-function getComplainsCollection (){
+function getAddressesCollection(){
     return collections.products
 }
 
 module.exports = {
     initialize,
-    getProductsCollection,
-    getUsersCollection,
+    getTransactionsCollection,
+    getAddressesCollection,
     getClient,
-    getComplainsCollection,
 }

@@ -4,7 +4,7 @@ const assert = require("assert");
 
 async function initialize(){
     const url = "mongodb://localhost:27017";
-    const dbName = "myFreeMarket";
+    const dbName = "myFreeMarketNodeBackend";
     const db = await new Promise(function(resolve, reject){
         client.connect(url,async function(err, client){
             assert.equal(null, err);
@@ -17,15 +17,12 @@ async function initialize(){
 }
 
 async function createCollections(db){
-    const collections = await db.collections()
-    if(!doesCollectionExist(collections,"users")){
-       await (await db.createCollection("users")).createIndexes([ { key: { 'mail': 1 }, unique: true } ])
+    const collections = await db.collections();
+    if(!doesCollectionExist(collections,"transactions")){
+       await (await db.createCollection("transactions")).createIndexes([ { key: { 'mail': 1 }, unique: true } ])
     }
-    if(!doesCollectionExist(collections,"products")){
-        await (await db.createCollection("products")).createIndexes([ { key: { 'productKey': 1 }, unique: true } ])
-    }
-    if(!doesCollectionExist(collections,"complains")){
-        await (await db.createCollection("complains")).createIndexes([ { key: { 'productKey': 1 }, unique: true } ])
+    if(!doesCollectionExist(collections,"addresses")){
+       await (await db.createCollection("addresses")).createIndexes([ { key: { 'mail': 1 }, unique: true } ])
     }
 }
 
