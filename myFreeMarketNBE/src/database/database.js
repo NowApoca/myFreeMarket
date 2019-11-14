@@ -16,7 +16,8 @@ async function initialize(database){
     client = dataBase.client;
     collections = {
         transactions: db.collection("transactions"),
-        addresses: db.collection("addresses")
+        addresses: db.collection("addresses"),
+        generalStatus: db.collection("generalStatus"),
     };
 }
 
@@ -32,9 +33,14 @@ function getAddressesCollection(){
     return collections.products
 }
 
+function getGeneralStatusCollection(){
+    return collections.generalStatus
+}
+
 module.exports = {
     initialize,
     getTransactionsCollection,
     getAddressesCollection,
+    getGeneralStatusCollection,
     getClient,
 }

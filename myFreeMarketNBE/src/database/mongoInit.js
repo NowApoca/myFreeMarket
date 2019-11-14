@@ -24,6 +24,9 @@ async function createCollections(db){
     if(!doesCollectionExist(collections,"addresses")){
        await (await db.createCollection("addresses")).createIndexes([ { key: { 'mail': 1 }, unique: true } ])
     }
+    if(!doesCollectionExist(collections,"generalStatus")){
+       await (await db.createCollection("generalStatus")).createIndexes([ { key: { 'mail': 1 }, unique: true } ])
+    }
 }
 
 function doesCollectionExist(collections, collectionName){

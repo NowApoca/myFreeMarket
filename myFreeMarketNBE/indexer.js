@@ -3,6 +3,8 @@ const Tx = require('ethereumjs-tx').Transaction;
 const constants = require("./constants");
 const database = require("./src/database/database")
 
+const documentIndexerName = "indexer-status";
+
 web3 = new Web3(new Web3.providers.HttpProvider('http://localhost:8545'));
 
 
@@ -19,6 +21,8 @@ async function sleep(milliseconds, cancel) {
 
 async function polling(){
     const shouldQuit = false;
+    const generalStatus = database.getGeneralStatusCollection()
+    const config = await generalStatus.findOne({name: documentIndexerName})
     let next_block = constants.initialBlock;
 
     while(!shouldQuit){
@@ -47,6 +51,9 @@ async function polling(){
             }
             await confirmateTxs(affectedTxs);
             await insertTxs(txToInsert);
+            await generalStatus.updateOne({name: documentIndexerName},{$set:{
+                next_block
+            }})
         }
     }
 }
@@ -120,10 +127,39 @@ async function getAffectedTxs(transactions){
 
 async function confirmateTxs(affectedTxs){
     const transactions = database.getTransactionsCollection();
+    const transactionsData = await transactions.find({$match: {$in: {txHash: affectedTxs}}});
     await transactions.update({$match: {$in:{txHash: affectedTxs}}, $set:{status: "confirmed"}});
+    confirmeTransactionsInServer(transactionsData);
 };
 
 async function insertTxs(txToInsert){
     const transactions = database.getTransactionsCollection();
     await transactions.insertMany(txToInsert);
 };
+
+async function confirmeTransactionsInServer(transactions){
+    const generalStatus = database.getGeneralStatusCollection();
+    const promises = [];
+    const failedConfirmations = [];
+    for (const transaction of transactions) {
+        promises.push(confirmateTxOnServer(transaction.txID, failedConfirmations));
+    }
+    await Promise.all(promises)
+    if(failedConfirmations.length > 0){
+        const generalStatusData = await findOne({name: documentIndexerName});
+        await generalStatus.updateOne({name: documentIndexerName},{$set: {unconfirmedTransactions: generalStatusData.unconfirmedTransactions.concat(failedConfirmations)}})
+    }
+}
+
+async function confirmateTxOnServer(txID, failedConfirmations){
+    const response = await axios.post("EL SERVER URL",{
+        txID: txID
+    })
+    if(response.status = 200){
+        return;
+    }
+    if(response.status = 404){
+        failedConfirmations.push(txID)
+        return;
+    }
+}
