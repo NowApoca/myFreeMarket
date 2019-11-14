@@ -30,7 +30,7 @@ function getTransactionsCollection(){
 }
 
 function getAddressesCollection(){
-    return collections.products
+    return collections.addresses
 }
 
 function getGeneralStatusCollection(){

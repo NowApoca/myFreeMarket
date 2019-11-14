@@ -8,8 +8,8 @@ const documentIndexerName = "indexer-status";
 web3 = new Web3(new Web3.providers.HttpProvider('http://localhost:8545'));
 
 
-async function sleep(milliseconds, cancel) {
-	while (milliseconds > 0 && (!cancel.shouldQuit)) {
+async function sleep(milliseconds) {
+	while (milliseconds > 0) {
 		const to_wait = (milliseconds > 300) ? 300 : milliseconds;
 		await new Promise((resolve) => {
 			setTimeout(resolve, to_wait);
@@ -20,11 +20,21 @@ async function sleep(milliseconds, cancel) {
 
 
 async function polling(){
+    // testing purposes
+    await database.initialize("mongo")
+    // 
     const shouldQuit = false;
     const generalStatus = database.getGeneralStatusCollection()
-    const config = await generalStatus.findOne({name: documentIndexerName})
+    let config = await generalStatus.findOne({name: documentIndexerName})
+    if(config === null){
+        config = {
+            name: documentIndexerName,
+            next_block: 0,
+            unconfirmedTransactions: [],
+        }
+        await generalStatus.insertOne(config)
+    }
     let next_block = constants.initialBlock;
-
     while(!shouldQuit){
         const block = await web3.eth.getBlock(next_block);
         if(block === null){
@@ -32,31 +42,41 @@ async function polling(){
         }else{
             next_block++;
             const transactions = await processBlock(block);
-            const affectedTxs = await getAffectedTxs(transactions.addresses);
-            const txToInsert = [];
-            const affectedAddresses = await getAffectedAddresses(transactions.addresses);
-            for(const address in affectedAddresses){
-                for(const txHash of transactions.addresses[address]){
-                    const tx = transactions.data[txHash];
-                    txToInsert.push({
-                        type: (tx.to == address) ? "deposit" : "withdraw",
-                        amount: tx.value,
-                        from: tx.from,
-                        to: tx.to,
-                        user: affectedAddresses[address],
-                        block: tx.blockNumber,
-                        nonce: tx.nonce,
-                    })
+            let affectedTxs;
+            let affectedAddresses;
+            let txToInsert = [];
+            if(block.transactions.length > 0){
+                affectedTxs = await getAffectedTxs(transactions.txHashs);
+                affectedAddresses = await getAffectedAddresses(transactions.addresses);
+                for(const address in affectedAddresses){
+                    for(const txHash of transactions.addresses[address]){
+                        const tx = transactions.data[txHash];
+                        txToInsert.push({
+                            type: (tx.to == address) ? "deposit" : "withdraw",
+                            amount: tx.value,
+                            from: tx.from,
+                            to: tx.to,
+                            user: affectedAddresses[address],
+                            block: tx.blockNumber,
+                            nonce: tx.nonce,
+                        })
+                    }
+                }
+                if(affectedTxs.length > 0){
+                    await confirmateTxs(affectedTxs);
+                }
+                if(txToInsert.length > 0){
+                    await insertTxs(txToInsert);
                 }
             }
-            await confirmateTxs(affectedTxs);
-            await insertTxs(txToInsert);
             await generalStatus.updateOne({name: documentIndexerName},{$set:{
                 next_block
             }})
         }
     }
 }
+
+polling();
 
 async function processBlock(block){
     const transactions = {
@@ -100,13 +120,13 @@ async function processTx(txHash, transactions){
     return;
 }
 
-async function getAffectedAddresses(addresses){
+async function getAffectedAddresses(affectedAddresses){
     const addresses = database.getAddressesCollection()
     const arrayOfAddresses = [];
-    for(const address in addresses){
+    for(const address in affectedAddresses){
         arrayOfAddresses.push(address)
     }
-    const cursor = await addresses.find({$match: {$in:{address: arrayOfAddresses}}});
+    const cursor = await addresses.aggregate([{$match: {address:{$in: arrayOfAddresses}}}]);
     const output = {};
     await cursor.forEach(function(item){
         output[item.address] = item.mail
@@ -114,9 +134,9 @@ async function getAffectedAddresses(addresses){
     return output;
 }
 
-async function getAffectedTxs(transactions){
+async function getAffectedTxs(affectedTransactions){
     const transactions = database.getTransactionsCollection();
-    const cursor = await transactions.find({$match: {$in:{txHash: transactions}}});
+    const cursor = await transactions.aggregate([{$match: {txHash:{$in: affectedTransactions}}}]);
     const output = [];
     await cursor.forEach(function(item){
         output.push(item.txHash);
@@ -127,8 +147,8 @@ async function getAffectedTxs(transactions){
 
 async function confirmateTxs(affectedTxs){
     const transactions = database.getTransactionsCollection();
-    const transactionsData = await transactions.find({$match: {$in: {txHash: affectedTxs}}});
-    await transactions.update({$match: {$in:{txHash: affectedTxs}}, $set:{status: "confirmed"}});
+    const transactionsData = await transactions.aggregate([{$match: {txHash: {$in: affectedTxs}}}]);
+    await transactions.updateMany([{$match: {txHash:{$in: affectedTxs}}, $set:{status: "confirmed"}}]);
     confirmeTransactionsInServer(transactionsData);
 };
 
