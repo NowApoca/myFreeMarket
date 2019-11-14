@@ -1,17 +1,19 @@
 const database = require("../database/database");
 const uuidv4 = require('uuid/v4');
 const ethereumUtils = require(__dirname + "/../ethereumUtils");
+const constants = require("../../constants")
 
 async function withdraw(req, res){
     const { toAddress, fromUser, txID, amount, speed } = res.locals;
     const addresses = database.getAddressesCollection();
     const transactions = database.getTransactionsCollection();
     const toUser = await addresses.findOne({address: toAddress});
-    const txHash = await ethereumUtils.transfer();
+
+    const txHash = await ethereumUtils.transfer(constants.mainAddress, toAddress, amount, constants.privKeyMain);
     await transactions.insertOne({
         fromUser: fromUser,
 		...(toUser !== null) && { toUser: toUser.mail },
-        fromAddress: fromAddress,
+        fromAddress: constants.mainAddress,
         toAddress: toAddress,
         txID: txID,
         txHash: txHash,
@@ -25,7 +27,7 @@ async function withdraw(req, res){
 }
 
 async function newDepositAddress(req, res){
-    const { user} = res.locals;
+    const { user }  = res.locals;
     const addresses = database.getAddressesCollection();
     const newAddress = await ethereumUtils.generateNewAddress();
     await addresses.insertOne({
@@ -35,7 +37,7 @@ async function newDepositAddress(req, res){
         balance: 0,
         status: "enabled",
     })
-	res.status(200).json("Done.");
+	res.status(200).json(newAddress);
 }
 
 // By the moment, I do not have clear if I should enable and disable deposit Addresses. Probably if the page ban someone.

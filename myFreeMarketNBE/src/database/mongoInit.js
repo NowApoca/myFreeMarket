@@ -2,9 +2,9 @@ const client = require("mongodb").MongoClient;
 const assert = require("assert");
 
 
-async function initialize(){
-    const url = "mongodb://localhost:27017";
-    const dbName = "myFreeMarketNodeBackend";
+async function initialize(settings){
+    const url = settings.dbUrl;
+    const dbName = settings.dbName;
     const db = await new Promise(function(resolve, reject){
         client.connect(url,async function(err, client){
             assert.equal(null, err);

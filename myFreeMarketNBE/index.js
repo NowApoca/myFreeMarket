@@ -6,12 +6,14 @@ const bodyParser = require("body-parser");
 
 /* Routes */
 
-async function initialize(){
-    await db.initialize("mongo");
+async function initialize(settings){
+    await db.initialize("mongo",settings);
     app.use(bodyParser.urlencoded({ extended: false }));
     app.use(bodyParser.json());
     app.use("", router);
-    app.listen(3003)
+    app.listen(settings.port)
 }
 
-initialize();
+module.exports = {
+    initialize
+}

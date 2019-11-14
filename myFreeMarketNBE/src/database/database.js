@@ -4,13 +4,13 @@ let db;
 let collections;
 let client;
 
-async function initialize(database){
+async function initialize(database, settings){
     let dataBase;
     switch(database){
         case "mongo":
-            dataBase = await mongoDb.initialize();
+            dataBase = await mongoDb.initialize(settings);
         case "default":
-            dataBase = await mongoDb.initialize();
+            dataBase = await mongoDb.initialize(settings);
     }
     db = dataBase.db;
     client = dataBase.client;
@@ -23,6 +23,10 @@ async function initialize(database){
 
 function getClient(){
     return client;
+}
+
+function getDb(){
+    return db;
 }
 
 function getTransactionsCollection(){
@@ -43,4 +47,5 @@ module.exports = {
     getAddressesCollection,
     getGeneralStatusCollection,
     getClient,
+    getDb,
 }

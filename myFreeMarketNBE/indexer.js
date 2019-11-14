@@ -183,3 +183,7 @@ async function confirmateTxOnServer(txID, failedConfirmations){
         return;
     }
 }
+
+module.exports = {
+    polling
+}

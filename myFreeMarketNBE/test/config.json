@@ -1,0 +1,5 @@
+{
+    "port": 3011,
+    "dbName": "test-nodeBackEnd-myFreeMarket",
+    "dbUrl":"mongodb://localhost:27017"
+}
