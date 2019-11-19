@@ -82,7 +82,14 @@ describe('Products Controller', function() {
         const fromAddress = "0xf08af1f662ecc2e795161a85f09fa5067db7d6af";
         const fromPrivKey = "c960c3508c4a73e189b9ec0599f6382f18aacbcd9274bf181702f1a7c4f30e24";
         const hash = await sendTx(fromAddress, account.address, fromPrivKey)
-        console.log(account.address, hash)
+        await common.sleep(1500)
+        const transactionDeposit = await transactions.findOne({txHash: hash})
+        expect(transactionDeposit.to).toEqual(account.address)
+        expect(transactionDeposit.status).toEqual("confirmed")
+        const depositAddress = await addresses.findOne({address: account.address})
+        const txDepositedHash = depositAddress.transactions[0].txHash;
+        const txDeposited = await transactions.findOne({txHash: txDepositedHash})
+        expect(txDeposited.status).toEqual("confirmed")
     });
 
 });

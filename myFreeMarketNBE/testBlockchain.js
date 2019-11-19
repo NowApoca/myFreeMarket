@@ -23,11 +23,18 @@ var rawTransaction = {
     tx.sign(privKey);
     var serializedTx = tx.serialize();
 
-    const hash= await web3.eth.sendSignedTransaction('0x' + serializedTx.toString('hex'));
-    return hash;
+    let hash;
+    try{
+        hash= await web3.eth.sendSignedTransaction('0x' + serializedTx.toString('hex'));
+    }catch(e){
+        console.log(e)
+        console.log(from, to, '0xDE0B6B3A7640000',)
+        throw new Error()
+    }
+    return hash.transactionHash;
 }
 
-sendTx("0x095960fa4006c155a7e6997c56e45a574b10a93c", "0xf08af1f662ecc2e795161a85f09fa5067db7d6af", "716c0b546d6caa7aa2f4c51f117eaad06b1053668dd254a22a74da7589082c09")
+// sendTx("0x095960fa4006c155a7e6997c56e45a574b10a93c", "0xf08af1f662ecc2e795161a85f09fa5067db7d6af", "716c0b546d6caa7aa2f4c51f117eaad06b1053668dd254a22a74da7589082c09")
 // c960c3508c4a73e189b9ec0599f6382f18aacbcd9274bf181702f1a7c4f30e24 0xf08af1f662ecc2e795161a85f09fa5067db7d6af
 // 716c0b546d6caa7aa2f4c51f117eaad06b1053668dd254a22a74da7589082c09 0x095960fa4006c155a7e6997c56e45a574b10a93c
 module.exports = {

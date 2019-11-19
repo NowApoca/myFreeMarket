@@ -12,6 +12,7 @@ web3 = new Web3(new Web3.providers.HttpProvider('http://localhost:8545'));
 async function polling(){
     const shouldQuit = false;
     const generalStatus = database.getGeneralStatusCollection()
+    const transactions = database.getTransactionsCollection();
     const addresses = database.getAddressesCollection();
     let config = await generalStatus.findOne({name: documentIndexerName})
     if(config === null){
@@ -29,21 +30,21 @@ async function polling(){
             await common.sleep(1000);
         }else{
             next_block++;
-            const transactions = await processBlock(block);
+            const txs = await processBlock(block);
             let affectedTxs;
             let affectedAddresses;
             let txToInsert = [];
             if(block.transactions.length > 0){
-                affectedTxs = await getAffectedTxs(transactions.txHashs);
-                affectedAddresses = await getAffectedAddresses(transactions.addresses);
+                affectedTxs = await getAffectedTxs(txs.txHashs);
+                affectedAddresses = await getAffectedAddresses(txs.addresses);
                 for(const address in affectedAddresses){
-                    for(const txHash of transactions.addresses[address]){
-                        const tx = transactions.data[txHash];
+                    for(const txHash of txs.addresses[address]){
+                        const tx = txs.data[txHash];
                         let type;
-                        if(tx.to == address){
+                        const txHashInDB = await transactions.findOne({txHash: txHash})
+                        if(((tx.to == address)) && (txHashInDB === null)){
                             type = "deposit";
                             const depositAmount = tx.amount - (2000000000*3000000);
-                            console.log("FIRST CALCULATIO", depositAmount, tx.amount, (2000000000*3000000))
                             const depositAccount = await addresses.findOne({address: address});
                             await generateDeposit(address, constants.mainAddress, depositAmount, depositAccount, affectedAddresses[address])
                             txToInsert.push({
@@ -122,7 +123,7 @@ async function processTx(txHash, transactions){
 
 async function generateDeposit(fromAddress, toAddress, amount, account, user){
     const transactions = database.getTransactionsCollection()
-    console.log("AMOUNT GENERATE DEPOSIT", amount)
+    const addresses = database.getAddressesCollection()
     const depositTxHash = await ethUtils.transfer(fromAddress, toAddress, amount, account);
     await transactions.insertOne({
         fromUser: user,
@@ -137,6 +138,12 @@ async function generateDeposit(fromAddress, toAddress, amount, account, user){
         status: "unconfirmed",
         timestamp: Math.trunc(((new Date()).getTime())/1000),
     })
+    await addresses.updateOne({address: fromAddress},{$push: {transactions: {
+        txHash: depositTxHash,
+        toAddress: toAddress,
+        amount: amount,
+        type: "deposit",
+    }}})
 }
 
 async function getAffectedAddresses(affectedAddresses){
@@ -173,7 +180,6 @@ async function confirmateTxs(affectedTxs){
             transactionsData.push(item);
         }
     });
-    console.log(transactionsData)
     await transactions.updateMany({txHash:{$in: affectedTxs}}, {$set:{status: "confirmed"}});
     confirmeTransactionsInServer(transactionsData);
 };

@@ -25,7 +25,7 @@ async function initialize(database, settings){
     if(config === null){
         await collections.generalStatus.insertOne({
             name: addressesConfigName,
-            next_accountId: 14
+            next_accountId: Math.floor(Math.random() * (1000000 - 1)) + 1,
         })
     }
 }

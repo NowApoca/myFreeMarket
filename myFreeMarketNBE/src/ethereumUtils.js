@@ -17,7 +17,6 @@ async function transfer(fromAddress, toAddress, amount, account){
         "to": toAddress,
         "value": '0x' + amount.toString(16),
     };
-    console.log(rawTransaction, " RAW TX")
     const privKeyHash = await getPrivateKey(account.accountId, account.addressId)
     const privKey = Buffer.from(privKeyHash, 'hex');
     const tx = new Tx(rawTransaction);
