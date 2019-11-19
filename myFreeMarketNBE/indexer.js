@@ -2,29 +2,16 @@ const Web3 = require('web3');
 const Tx = require('ethereumjs-tx').Transaction;
 const constants = require("./constants");
 const database = require("./src/database/database")
-
+const axios = require("axios")
 const documentIndexerName = "indexer-status";
-
+const common = require("./src/common");
+const ethUtils = require("./src/ethereumUtils")
 web3 = new Web3(new Web3.providers.HttpProvider('http://localhost:8545'));
 
-
-async function sleep(milliseconds) {
-	while (milliseconds > 0) {
-		const to_wait = (milliseconds > 300) ? 300 : milliseconds;
-		await new Promise((resolve) => {
-			setTimeout(resolve, to_wait);
-		});
-		milliseconds -= to_wait;
-	}
-}
-
-
 async function polling(){
-    // testing purposes
-    await database.initialize("mongo")
-    // 
     const shouldQuit = false;
     const generalStatus = database.getGeneralStatusCollection()
+    const addresses = database.getAddressesCollection();
     let config = await generalStatus.findOne({name: documentIndexerName})
     if(config === null){
         config = {
@@ -38,7 +25,7 @@ async function polling(){
     while(!shouldQuit){
         const block = await web3.eth.getBlock(next_block);
         if(block === null){
-            await sleep(1000);
+            await common.sleep(1000);
         }else{
             next_block++;
             const transactions = await processBlock(block);
@@ -51,15 +38,24 @@ async function polling(){
                 for(const address in affectedAddresses){
                     for(const txHash of transactions.addresses[address]){
                         const tx = transactions.data[txHash];
+                        let type;
+                        if(tx.to == address){
+                            type = "deposit";
+                            const depositAmount = tx.amount - constants.feeLowPrice;
+                            const depositAccount = await addresses.findOne({address: address});
+                            await generateDeposit(address, constants.mainAddress, depositAmount, depositAccount, affectedAddresses[address])
+                        }else{
+                            type = "withdraw";
+                        }
                         txToInsert.push({
-                            type: (tx.to == address) ? "deposit" : "withdraw",
-                            amount: tx.value,
+                            type: type,
+                            amount: tx.amount,
                             from: tx.from,
                             to: tx.to,
                             user: affectedAddresses[address],
-                            block: tx.blockNumber,
-                            nonce: tx.nonce,
-                        })
+                            block: tx.block,
+                            status: "confirmed",
+                            txHash: txHash,})
                     }
                 }
                 if(affectedTxs.length > 0){
@@ -67,6 +63,7 @@ async function polling(){
                 }
                 if(txToInsert.length > 0){
                     await insertTxs(txToInsert);
+                    await generateDeposits(affectedAddresses);
                 }
             }
             await generalStatus.updateOne({name: documentIndexerName},{$set:{
@@ -75,8 +72,6 @@ async function polling(){
         }
     }
 }
-
-polling();
 
 async function processBlock(block){
     const transactions = {
@@ -120,6 +115,25 @@ async function processTx(txHash, transactions){
     return;
 }
 
+async function generateDeposit(fromAddress, toAddress, amount, account, user){
+    const transactions = database.getTransactionsCollection()
+    const depositTxHash = await ethUtils.transfer(fromAddress, toAddress, amount, account);
+    await transactions.insertOne({
+        fromUser: user,
+		...(toUser !== null) && { toUser: toUser.mail },
+        fromAddress: fromAddress,
+        toAddress: toAddress,
+        txID: txID,
+        txHash: depositTxHash,
+        amount: amount,
+        speed: "low",
+        gasPrice: 5,
+        gasLimit: 5,
+        status: "unconfirmed",
+        timestamp: Math.trunc(((new Date()).getTime())/1000),
+    })
+}
+
 async function getAffectedAddresses(affectedAddresses){
     const addresses = database.getAddressesCollection()
     const arrayOfAddresses = [];
@@ -129,7 +143,7 @@ async function getAffectedAddresses(affectedAddresses){
     const cursor = await addresses.aggregate([{$match: {address:{$in: arrayOfAddresses}}}]);
     const output = {};
     await cursor.forEach(function(item){
-        output[item.address] = item.mail
+        output[item.address] = item.user
     })
     return output;
 }
@@ -147,8 +161,14 @@ async function getAffectedTxs(affectedTransactions){
 
 async function confirmateTxs(affectedTxs){
     const transactions = database.getTransactionsCollection();
-    const transactionsData = await transactions.aggregate([{$match: {txHash: {$in: affectedTxs}}}]);
-    await transactions.updateMany([{$match: {txHash:{$in: affectedTxs}}, $set:{status: "confirmed"}}]);
+    const cursor = await transactions.aggregate([{$match: {txHash: {$in: affectedTxs}}}]);
+    const transactionsData = [];
+    await cursor.forEach(function(item){
+        if(item){
+            transactionsData.push(item);
+        }
+    });
+    await transactions.updateMany({txHash:{$in: affectedTxs}}, {$set:{status: "confirmed"}});
     confirmeTransactionsInServer(transactionsData);
 };
 
@@ -171,17 +191,18 @@ async function confirmeTransactionsInServer(transactions){
     }
 }
 
+
 async function confirmateTxOnServer(txID, failedConfirmations){
-    const response = await axios.post("EL SERVER URL",{
-        txID: txID
-    })
-    if(response.status = 200){
-        return;
-    }
-    if(response.status = 404){
-        failedConfirmations.push(txID)
-        return;
-    }
+    // const response = await axios.post("EL SERVER URL",{
+    //     txID: txID
+    // })
+    // if(response.status = 200){
+    //     return;
+    // }
+    // if(response.status = 404){
+    //     failedConfirmations.push(txID)
+    //     return;
+    // }
 }
 
 module.exports = {

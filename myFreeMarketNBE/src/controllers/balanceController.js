@@ -8,8 +8,7 @@ async function withdraw(req, res){
     const addresses = database.getAddressesCollection();
     const transactions = database.getTransactionsCollection();
     const toUser = await addresses.findOne({address: toAddress});
-
-    const txHash = await ethereumUtils.transfer(constants.mainAddress, toAddress, amount, constants.privKeyMain);
+    const txHash = await ethereumUtils.transfer(constants.mainAddress, toAddress, amount, mainAccount);
     await transactions.insertOne({
         fromUser: fromUser,
 		...(toUser !== null) && { toUser: toUser.mail },
@@ -21,21 +20,40 @@ async function withdraw(req, res){
         speed: speed,
         gasPrice: 5,
         gasLimit: 5,
+        status: "unconfirmed",
         timestamp: Math.trunc(((new Date()).getTime())/1000),
     })
 	res.status(200).json(txHash);
 }
 
+async function newUser(req, res){
+    const { user }  = res.locals;
+    const users = database.getUsersCollection();
+    const generalStatus = database.getGeneralStatusCollection();
+    const config = await generalStatus.findOne({name:"addresses-status"})
+    await users.insertOne({
+        addresses: [],
+        accountId: config.next_accountId,
+        mail: user,
+        balance: 0
+    })
+	res.status(200).json("Done.");
+}
+
 async function newDepositAddress(req, res){
     const { user }  = res.locals;
     const addresses = database.getAddressesCollection();
-    const newAddress = await ethereumUtils.generateNewAddress();
+    const users = database.getUsersCollection();
+    const userAccount = await users.findOne({mail: user})
+    const newAddress = await ethereumUtils.generateNewAddress(userAccount.accountId, userAccount.addresses.length);
     await addresses.insertOne({
         address: newAddress,
         user: user,
         transactions: [],
         balance: 0,
         status: "enabled",
+        accountId: userAccount.accountId,
+        addressId: userAccount.addresses.length,
     })
 	res.status(200).json(newAddress);
 }
@@ -61,5 +79,6 @@ module.exports = {
     disableDepositAddress,
     enableDepositAddress,
     newDepositAddress,
+    newUser,
 }
 

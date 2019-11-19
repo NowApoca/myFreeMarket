@@ -19,13 +19,16 @@ async function initialize(settings){
 async function createCollections(db){
     const collections = await db.collections();
     if(!doesCollectionExist(collections,"transactions")){
-       await (await db.createCollection("transactions")).createIndexes([ { key: { 'mail': 1 }, unique: true } ])
+       await (await db.createCollection("transactions")).createIndexes([ { key: { 'txHash': 1 }, unique: true } ])
     }
     if(!doesCollectionExist(collections,"addresses")){
-       await (await db.createCollection("addresses")).createIndexes([ { key: { 'mail': 1 }, unique: true } ])
+       await (await db.createCollection("addresses")).createIndexes([ { key: { 'address': 1 }, unique: true } ])
+    }
+    if(!doesCollectionExist(collections,"users")){
+       await (await db.createCollection("users")).createIndexes([ { key: { 'mail': 1 }, unique: true } ])
     }
     if(!doesCollectionExist(collections,"generalStatus")){
-       await (await db.createCollection("generalStatus")).createIndexes([ { key: { 'mail': 1 }, unique: true } ])
+       await (await db.createCollection("generalStatus")).createIndexes([ { key: { 'name': 1 }, unique: true } ])
     }
 }
 

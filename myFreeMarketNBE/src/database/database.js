@@ -3,6 +3,7 @@ const mongoDb = require("./mongoInit");
 let db;
 let collections;
 let client;
+const addressesConfigName = "addresses-status"
 
 async function initialize(database, settings){
     let dataBase;
@@ -18,7 +19,15 @@ async function initialize(database, settings){
         transactions: db.collection("transactions"),
         addresses: db.collection("addresses"),
         generalStatus: db.collection("generalStatus"),
+        users: db.collection("users"),
     };
+    const config = await collections.generalStatus.findOne({name: addressesConfigName})
+    if(config === null){
+        await collections.generalStatus.insertOne({
+            name: addressesConfigName,
+            next_accountId: 1
+        })
+    }
 }
 
 function getClient(){
@@ -41,11 +50,17 @@ function getGeneralStatusCollection(){
     return collections.generalStatus
 }
 
+
+function getUsersCollection(){
+    return collections.users
+}
+
 module.exports = {
     initialize,
     getTransactionsCollection,
     getAddressesCollection,
     getGeneralStatusCollection,
+    getUsersCollection,
     getClient,
     getDb,
 }

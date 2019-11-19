@@ -5,6 +5,7 @@ const axios = require("axios");
 const uuid4 = require("uuid/v4");
 const expect = require('expect');
 const common = require("./common")
+const { sendTx } = require("../testBlockchain")
 
 before(() => {
   return new Promise((resolve) => {
@@ -17,26 +18,75 @@ before(() => {
 
 describe('Products Controller', function() {
 
-    it('Create new deposit address', async () => {
+
+    it('Create new user', async () => {
         await dropDatabase();
+        const users = database.getUsersCollection();
         const user = {
-            user: "123"
+            user: uuid4()
         }
-        const result = await axios.post("http://localhost:" + settings.port + "/balance/add/deposit/address", user)
+        const result = await axios.post("http://localhost:" + settings.port + "/balance/add/user", user)
+        expect(result.status).toEqual(200)
+        const userRegistered = await users.findOne({mail: user.user});
+        expect(userRegistered.accountId).toEqual(1);
+        expect(userRegistered.addresses).toEqual([]);
+        expect(result.data).toEqual("Done.");
     });
 
-    it('Create new withdraw', async () => {
+    it('Create new deposit address', async () => {
         await dropDatabase();
-        const txTransfer = {
-            toAddress: "0x3bc2798FcAF5D24aa234d58cB436Adf7cA4152e2",
-            fromUser: "123",
-            txID: uuid4(),
-            amount: "100",
-            speed: "fast",
+        const addresses = database.getAddressesCollection();
+        const user = {
+            user: uuid4()
         }
-        const result = await axios.post("http://localhost:" + settings.port + "/balance/withdraw", txTransfer)
-        console.log(result)
+        const resultPost1 = await axios.post("http://localhost:" + settings.port + "/balance/add/user", user)
+        expect(resultPost1.status).toEqual(200)
+        const resultPost2 = await axios.post("http://localhost:" + settings.port + "/balance/add/deposit/address", user)
+        expect(resultPost2.status).toEqual(200)
+        const account = await addresses.findOne({address: resultPost2.data});
+        expect(account.address).toEqual(resultPost2.data);
     });
+
+    // it('Create new withdraw', async () => {
+    //     await dropDatabase();
+    //     const transactions = database.getTransactionsCollection()
+    //     const txTransfer = {
+    //         toAddress: "0x3bc2798FcAF5D24aa234d58cB436Adf7cA4152e2",
+    //         fromUser: "123",
+    //         txID: uuid4(),
+    //         amount: "100",
+    //         speed: "fast",
+    //     }
+    //     const result = await axios.post("http://localhost:" + settings.port + "/balance/withdraw", txTransfer);
+    //     expect(result.status).toEqual(200);
+    //     expect(/^0x([A-Fa-f0-9]{64})$/.test(result.data)).toEqual(true);
+    //     await common.sleep(500)
+    //     const confirmedTx = await transactions.findOne({txHash: result.data})
+    //     expect(confirmedTx.status).toEqual("confirmed")
+    // });
+
+
+    it('Deposit to an address', async () => {
+        await dropDatabase();
+        const addresses = database.getAddressesCollection();
+        const user = {
+            user: uuid4()
+        }
+        const resultPost1 = await axios.post("http://localhost:" + settings.port + "/balance/add/user", user)
+        expect(resultPost1.status).toEqual(200)
+        const resultPost2 = await axios.post("http://localhost:" + settings.port + "/balance/add/deposit/address", user)
+        expect(resultPost2.status).toEqual(200)
+        const account = await addresses.findOne({address: resultPost2.data});
+        expect(account.address).toEqual(resultPost2.data);
+
+        await dropDatabase();
+        const transactions = database.getTransactionsCollection()
+        const addresses = database.getAddressesCollection()
+        expect(result.status).toEqual(200)
+        expect(result.data).toEqual("NEW ADDRESS")
+        const hash = await sendTx(fromAddress, toAddress, fromPrivKey)
+    });
+
 });
 
 async function dropDatabase(){

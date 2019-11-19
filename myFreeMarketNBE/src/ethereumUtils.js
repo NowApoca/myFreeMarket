@@ -1,10 +1,13 @@
-
 const Web3 = require('web3');
 const Tx = require('ethereumjs-tx').Transaction;
 const constants = require("../constants");
+web3 = new Web3(new Web3.providers.HttpProvider('http://localhost:8545'));
+var bip39 = require("bip39");
+var hdkey = require('ethereumjs-wallet/hdkey');
 
-async function transfer(fromAddress, toAddress, amount, privKeyHash){
-    web3 = new Web3(new Web3.providers.HttpProvider('http://localhost:8545'));;
+const mnemonic = "dad minute exhibit slot ball vault fever busy awkward cook gloom already"
+
+async function transfer(fromAddress, toAddress, amount, account){
     const nonce = await web3.eth.getTransactionCount("0xf08af1f662ecc2e795161a85f09fa5067db7d6af")
     const rawTransaction = {
         "from": fromAddress,
@@ -14,6 +17,8 @@ async function transfer(fromAddress, toAddress, amount, privKeyHash){
         "to": toAddress,
         "value": '0x' + amount.toString(16),
     };
+    console.log(fromAddress, account)
+    const privKeyHash = await getPrivateKey(account.id, account.addressIndex)
     const privKey = Buffer.from(privKeyHash, 'hex');
     const tx = new Tx(rawTransaction);
     tx.sign(privKey);
@@ -22,12 +27,29 @@ async function transfer(fromAddress, toAddress, amount, privKeyHash){
     return txSent.transactionHash;
 }
 
-async function generateNewAddress(){
-    return "NEW ADDRESS"
+async function generateNewAddress ( accountId, addressIndex){
+    let hdwallet = hdkey.fromMasterSeed(await bip39.mnemonicToSeed(mnemonic));
+    let wallet_hdpath = 'm/44"/60/'+accountId+'"/' + addressIndex;
+    var wallet = hdwallet.derivePath(wallet_hdpath).getWallet();
+    return "0x"+wallet.getAddress().toString("hex");
+}
+
+async function getPrivateKey( accountId, addressIndex){
+    let hdwallet = hdkey.fromMasterSeed(await bip39.mnemonicToSeed(mnemonic));
+    let wallet_hdpath = 'm/44"/60/'+accountId+'"/' + addressIndex;
+    var wallet = hdwallet.derivePath(wallet_hdpath).getWallet();
+    return wallet._privKey.toString('hex');
+    // publicKey: hdwallet.derivePath(wallet_hdpath + i)._hdkey.publicKey.toString('hex')
+}
+
+async function isValidEthAddress(address){
+    return web3.utils.isAddress(address);
 }
 
 module.exports = {
     transfer,
     generateNewAddress,
+    getPrivateKey,
+    isValidEthAddress,
 }
 

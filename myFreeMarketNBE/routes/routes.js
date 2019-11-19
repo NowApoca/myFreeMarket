@@ -1,4 +1,3 @@
-
 const express = require('express');
 const router = express.Router();
 const {proccessUser, proccessTransaction} = require("./middleware")
@@ -12,5 +11,6 @@ const balanceController = require(__dirname + "/../src/controllers/balanceContro
 
 router.post("/balance/add/deposit/address", proccessUser, balanceController.newDepositAddress);
 router.post("/balance/withdraw", proccessTransaction, balanceController.withdraw);
+router.post("/balance/add/user", proccessUser, balanceController.newUser);
 
 module.exports = router;
