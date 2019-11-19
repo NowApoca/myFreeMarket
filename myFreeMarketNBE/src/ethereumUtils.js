@@ -8,7 +8,7 @@ var hdkey = require('ethereumjs-wallet/hdkey');
 const mnemonic = "dad minute exhibit slot ball vault fever busy awkward cook gloom already"
 
 async function transfer(fromAddress, toAddress, amount, account){
-    const nonce = await web3.eth.getTransactionCount("0xf08af1f662ecc2e795161a85f09fa5067db7d6af")
+    const nonce = await web3.eth.getTransactionCount(fromAddress)
     const rawTransaction = {
         "from": fromAddress,
         "nonce": '0x' + Number(nonce).toString(16),
@@ -17,13 +17,20 @@ async function transfer(fromAddress, toAddress, amount, account){
         "to": toAddress,
         "value": '0x' + amount.toString(16),
     };
-    console.log(fromAddress, account)
-    const privKeyHash = await getPrivateKey(account.id, account.addressIndex)
+    console.log(rawTransaction, " RAW TX")
+    const privKeyHash = await getPrivateKey(account.accountId, account.addressId)
     const privKey = Buffer.from(privKeyHash, 'hex');
     const tx = new Tx(rawTransaction);
     tx.sign(privKey);
     const serializedTx = tx.serialize();
-    const txSent = await web3.eth.sendSignedTransaction('0x' + serializedTx.toString('hex'))
+    let txSent;
+    try{
+        txSent = await web3.eth.sendSignedTransaction('0x' + serializedTx.toString('hex'))
+    }catch(e){
+        console.log(e)
+        console.log(fromAddress, toAddress, amount, account)
+        throw new Error()
+    }
     return txSent.transactionHash;
 }
 

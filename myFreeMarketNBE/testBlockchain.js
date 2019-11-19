@@ -14,7 +14,7 @@ var rawTransaction = {
     "gasPrice": '0x' + Number(gasPrice * 1e9).toString(16),
     "gasLimit": '0x' + Number(gasLimit).toString(16),
     "to": to,
-    "value": '0x600000',
+    "value": '0xDE0B6B3A7640000',
     "chainId": 4 //remember to change this
     };
     var privKey = Buffer.from(priv, 'hex');

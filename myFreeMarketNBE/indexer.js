@@ -6,6 +6,7 @@ const axios = require("axios")
 const documentIndexerName = "indexer-status";
 const common = require("./src/common");
 const ethUtils = require("./src/ethereumUtils")
+const uuid4 = require("uuid/v4")
 web3 = new Web3(new Web3.providers.HttpProvider('http://localhost:8545'));
 
 async function polling(){
@@ -41,21 +42,20 @@ async function polling(){
                         let type;
                         if(tx.to == address){
                             type = "deposit";
-                            const depositAmount = tx.amount - constants.feeLowPrice;
+                            const depositAmount = tx.amount - (2000000000*3000000);
+                            console.log("FIRST CALCULATIO", depositAmount, tx.amount, (2000000000*3000000))
                             const depositAccount = await addresses.findOne({address: address});
                             await generateDeposit(address, constants.mainAddress, depositAmount, depositAccount, affectedAddresses[address])
-                        }else{
-                            type = "withdraw";
+                            txToInsert.push({
+                                type: type,
+                                amount: tx.amount,
+                                from: tx.from,
+                                to: tx.to,
+                                user: affectedAddresses[address],
+                                block: tx.block,
+                                status: "confirmed",
+                                txHash: txHash,})
                         }
-                        txToInsert.push({
-                            type: type,
-                            amount: tx.amount,
-                            from: tx.from,
-                            to: tx.to,
-                            user: affectedAddresses[address],
-                            block: tx.block,
-                            status: "confirmed",
-                            txHash: txHash,})
                     }
                 }
                 if(affectedTxs.length > 0){
@@ -63,7 +63,6 @@ async function polling(){
                 }
                 if(txToInsert.length > 0){
                     await insertTxs(txToInsert);
-                    await generateDeposits(affectedAddresses);
                 }
             }
             await generalStatus.updateOne({name: documentIndexerName},{$set:{
@@ -89,6 +88,12 @@ async function processBlock(block){
 
 async function processTx(txHash, transactions){
     const tx = await web3.eth.getTransaction(txHash);
+    if(tx.to){
+        tx.to = tx.to.toLowerCase();
+    }
+    if(tx.from){
+        tx.from = tx.from.toLowerCase();
+    }
     if(tx.from){
         if(transactions.addresses[tx.from]){
             transactions.addresses[tx.from].push(tx.hash);
@@ -117,13 +122,13 @@ async function processTx(txHash, transactions){
 
 async function generateDeposit(fromAddress, toAddress, amount, account, user){
     const transactions = database.getTransactionsCollection()
+    console.log("AMOUNT GENERATE DEPOSIT", amount)
     const depositTxHash = await ethUtils.transfer(fromAddress, toAddress, amount, account);
     await transactions.insertOne({
         fromUser: user,
-		...(toUser !== null) && { toUser: toUser.mail },
         fromAddress: fromAddress,
         toAddress: toAddress,
-        txID: txID,
+        txID: uuid4(),
         txHash: depositTxHash,
         amount: amount,
         speed: "low",
@@ -168,6 +173,7 @@ async function confirmateTxs(affectedTxs){
             transactionsData.push(item);
         }
     });
+    console.log(transactionsData)
     await transactions.updateMany({txHash:{$in: affectedTxs}}, {$set:{status: "confirmed"}});
     confirmeTransactionsInServer(transactionsData);
 };

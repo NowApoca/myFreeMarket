@@ -25,7 +25,7 @@ async function initialize(database, settings){
     if(config === null){
         await collections.generalStatus.insertOne({
             name: addressesConfigName,
-            next_accountId: 1
+            next_accountId: 14
         })
     }
 }
