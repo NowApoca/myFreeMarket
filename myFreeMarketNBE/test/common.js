@@ -7,7 +7,7 @@ module.exports = {
         }catch(e){
             return {e: e.response.statusText, status: e.response.status};
         }
-        return "Not Throwed"
+        return {status: 200, e: "Not Throwed"}
     },
     sleep: async function sleep(milliseconds) {
 	        while (milliseconds > 0) {

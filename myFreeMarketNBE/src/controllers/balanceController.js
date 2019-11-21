@@ -8,7 +8,7 @@ async function withdraw(req, res){
     const addresses = database.getAddressesCollection();
     const transactions = database.getTransactionsCollection();
     const toUser = await addresses.findOne({address: toAddress});
-    const txHash = await ethereumUtils.transfer(constants.mainAddress, toAddress, amount, mainAccount);
+    const txHash = await ethereumUtils.transfer(constants.mainAddress, toAddress, amount, constants.mainAccount);
     await transactions.insertOne({
         fromUser: fromUser,
 		...(toUser !== null) && { toUser: toUser.mail },

@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const {proccessUser, proccessTransaction} = require("./middleware")
+const {proccessUser, proccessTransaction, checkUser} = require("./middleware")
 const balanceController = require(__dirname + "/../src/controllers/balanceController")
 /* Home */
 
@@ -9,8 +9,8 @@ const balanceController = require(__dirname + "/../src/controllers/balanceContro
 
 /* Balance Controller */
 
-router.post("/balance/add/deposit/address", proccessUser, balanceController.newDepositAddress);
-router.post("/balance/withdraw", proccessTransaction, balanceController.withdraw);
-router.post("/balance/add/user", proccessUser, balanceController.newUser);
+router.post("/balance/add/deposit/address", checkUser, balanceController.newDepositAddress);
+router.post("/balance/withdraw", proccessUser, proccessTransaction, balanceController.withdraw);
+router.post("/balance/add/user", checkUser, balanceController.newUser);
 
 module.exports = router;

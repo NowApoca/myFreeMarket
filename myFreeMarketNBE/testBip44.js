@@ -42,21 +42,18 @@ function coinType(coin){
   }
 async function bip44 (coin,num,index,mnemonic){
   let hdwallet = hdkey.fromMasterSeed(await bip39.mnemonicToSeed(mnemonic));
-  let wallet_hdpath = 'm/44"/' + coinType("ETH") +'/0"/0';
+  let wallet_hdpath = 'm/44"/' + coinType("ETH") +'/100"/100';
   let wallets = {};
   let addresses = [];
-  for (let i = index; i < index + num; i++){
-
-    var wallet = hdwallet.derivePath(wallet_hdpath + i).getWallet();
-    var addr = "0x"+wallet.getAddress().toString("hex");
-    addresses.push({address: addr, PrivateKey: wallet._privKey.toString('hex'), PublicKey: hdwallet.derivePath(wallet_hdpath + i)._hdkey.publicKey.toString('hex')});
-    wallets[addr] = wallet;
-  }
-  console.log(addresses)
+  var wallet = hdwallet.derivePath(wallet_hdpath).getWallet();
+  var addr = "0x"+wallet.getAddress().toString("hex");
+  addresses.push({address: addr, PrivateKey: wallet._privKey.toString('hex'), PublicKey: hdwallet.derivePath(wallet_hdpath)._hdkey.publicKey.toString('hex')});
+  wallets[addr] = wallet;
+  console.log(addresses, wallet_hdpath)
   return {addresses:addresses,hdpath: wallet_hdpath}
 }
 
-bip44("ETH",5,0,"dad minute exhibit slot ball vault fever busy awkward cook gloom already")
+bip44("ETH",1,0,"dad minute exhibit slot ball vault fever busy awkward cook gloom already")
 
 module.exports = {
   bip44: bip44,

@@ -48,7 +48,7 @@ async function getPrivateKey( accountId, addressIndex){
     // publicKey: hdwallet.derivePath(wallet_hdpath + i)._hdkey.publicKey.toString('hex')
 }
 
-async function isValidEthAddress(address){
+function isValidEthAddress(address){
     return web3.utils.isAddress(address);
 }
 

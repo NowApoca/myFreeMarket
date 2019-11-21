@@ -2,11 +2,11 @@ module.exports = {
     initialBlock: 0,
     gasLimit: 3000000,
     gasPrice: 2,
-    mainAddress: "0xf08af1f662ecc2e795161a85f09fa5067db7d6af",
+    mainAddress: "0x7f1af8256f92fab89344813441338db0490349fd",
     mainAccount: {
-        id: 0,
-        addressIndex: 0,
+        accountId: 100,
+        addressId: 100,
     },
-    minWithdraw: 0,
+    minWithdraw: 10,
     feeLowPrice: 2,
 }
