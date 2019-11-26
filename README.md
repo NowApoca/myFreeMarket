@@ -92,11 +92,126 @@ My idea was organizing the project in three big sections: BackEnd, NodeBackEnd a
     
 ## Testing
 
-    It is an important thing in the majority of programs. It allows you, if the tests are well done, be sure that your code is enough roboust to pass your battery of tests. If you make tests for having a minimal functionality, everytime when your code run fine that battery of tests you will be a bit sure that everything is one is sure that aquire the less possibles functionalities. Imagine that situation: you have a function that perform a sum between two numbers, 'a' and 'b':
+### Unit tests
+
+    It is an important thing in the majority of programs. It allows you, if the tests are well done, be sure that your code is enough roboust to pass your battery of tests. If you make tests for having a minimal functionality, everytime when your code run and pass the battery of unit-tests you will be sure that everything you tested would be working fine. For example, imagine that situation: you have a function that perform a sum between two numbers, 'a' and 'b':
     
 ```javascript
 function sum (a,b){
     return a + b;
 }
 ```
-For testing some code, we have to
+
+How we test it? We have to reproduce the function externaly and compare the results betweet the function tested and the external behaviour and they have to be equal.
+
+```javascript
+function sum (a,b){
+    return a + b;
+}
+
+function isSumWorking (){
+    const resultSum = sum( 4, 5);
+    const externalSum = 4 + 5; 
+    return resultSum + externalSum;
+}
+```
+
+Code above is a ugly way of testing if sum works. We reproduce a case externaly ( externalSum ) and compare the result of both behaviours and we expect them to match. Of course production code appearence is not like that, there are test tools like 'mocha' or 'jest' that allow us to make quality tests.
+
+The idea of unit testing is, as the name says, test an unique functionality. Perhaps test an unique functionality require to test another functions, but we focus on the behaviour of that single functionality that we want to test because if another function fails, it is going to be showed in the test of the failed one. Let's see an example of myFreeMarket tests:
+
+
+```javascript
+    it('Log up', async () => {
+        const user = {
+            name: uuid4(),
+            lastName: uuid4(),
+            mail: uuid4(),
+            password: uuid4()
+        }
+        const resultPost = await axios.post("http://localhost:" + settings.port + "/logup", user);
+        expect(resultPost.data.result).toEqual("DONE");
+        expect(resultPost.status).toEqual(200);
+        const users = database.getUsersCollection();
+        const resultGet = await users.findOne({name: user.name})
+        expect(resultGet.mail).toEqual(user.mail);
+    });
+
+    it('Log in with an invalid email', async () => {
+        let user = {
+            name: uuid4(),
+            lastName: uuid4(),
+            mail: uuid4(),
+            password: uuid4()
+        }
+        const resultPost = await axios.post("http://localhost:" + settings.port + "/logup", user);
+        expect(resultPost.data.result).toEqual("DONE");
+        expect(resultPost.status).toEqual(200);
+        const users = database.getUsersCollection();
+        const resultGet = await users.findOne({name: user.name})
+        expect(resultGet.mail).toEqual(user.mail);
+        user.mail = "Invalid Mail"
+        const resultError = await common.getErrorAsyncRequest(axios.post("http://localhost:" + settings.port + "/login", user));
+        expect(resultError.e).toEqual("Invalid Mail or Password.")
+        expect(resultError.status).toEqual(404)
+    });
+```
+
+The first test, 'Log Up', test the registration of a person to the web site. The second test try to Log In with an invalid mail and expects request to exploit. If the Log Up in the second test exploit, we are going to see it reflected in the first test result so we know that the second test is not working because the first part of the code is exploding, not because the second test not work. Maybe it does not work too, but we know that the log up does not work.
+
+### Integration tests
+
+There are huge types of tests like Unit Testing, System Testing, Smoke testing, Volume Testing, Performance Testing, etc. I will only focus on two types: Integration tests and Unit tests. As the name says, Integration Tests involve more than one module of code and test the combined functionality of both. By now I do not have working integration tests, if a future I will explain that with examples.
+
+
+## Log in session.
+
+Actually I am using sessions for the Log in code. Basically, when an user logs succefully recives an sessionID from the website. Both user and server keep that sessionID that allows user to close and open the website and still being loged. I choose to expire user's sessionID so if the user left there will be few minutes for making malicious atacks. Basically I generate a random ID with the library uuid, more precisaisly the random v4. I save it in cookies which is vulnerable to atacks if the user's computer is compromised. It is difficult to make a friendly user interface secured of atacks if the user's PC is compromised, so I choose do not ask 2FA for all user actions, by default only for withdraws, purchases and sales. If the user wants he can uncheck that options.
+
+### 2FA
+
+That part of the code is not available now but the idea is next. Basically, both client and google generate a password with them in the moment of scan the QR. That passwords are going to be synced ( google supports HOTP and TOTP which are algorithms for generating one-time passwords) in both sides. When the user requires 2FA, the website server will ask his password and check with google if that code match. If it does, website allows the user to operate free. It is a step of security very important because both PC and cellphone have to be compromised for a full atack to users. In the next weeks I will upload an example.
+
+### Password Save
+
+Password is going to be keep encrypted. When the user Logs Up, website frontend hashs the password and send to the backend server the encrpyted password. When user wants to log in, he will write his password and send the log in request after hashing his password again, so the serverside would check if both passwords match. Only will match the encrpyted correct password with the log up encrpyted password. It prevents the server to be hacked, which does not affect the server but in case of do not encrpy the passwords it allows atackers to have the passwords of all the users and use them for atacking anothers web pages.
+
+## Database
+
+As we manage transactions, purchases and things with money, the best way of not having errors is with a database strong of ACID ( atomicity, consistency, isolation and durability). What does it means? Well, let's explain each characteristic of ACID with an example:
+
+### Atomicity
+    It guarantees that the action will not be perfomed partially. It fails or succeeds fully, never partially. It is very important because for preventing errors like crashes or power failures. If a bank transfer from A to B fail after taking the money from A and do not upload the balance of B, we will lost the money of A because it was not recorded and B balance was not refreshed.
+
+### Consistency
+    Consistency ensures you everytime that you read some data from database it is going to have the correct value. It saves you of reading the precise balance of an account.
+
+### Isolation
+    Isolation ensures that concurrent execution of transactions leaves the database in the same state that would have been obtained if the transactions were executed sequentially. It prevents take entire balance of the user and try to send money before the change is committed from that account to other. With Isolation that transfer can not be do because the second action will know that a first action of withdraw was executed and there is no balance available.
+
+### Durability
+    Durability guarantees that once a transaction has been committed, it will remain committed even in the case of a system failure. For example, if energy crashs we could fine the database in a non-volatile memory.
+
+In my opinion, RDS (Relational Data Bases) perform better ACID characteristics than NoRDS. Despite of that fact, I will use MongoDB. It is a NoSQL database, but recently it has obtained some ACID characteristics and I want to test them.
+
+## Scalability.
+
+First of all, what is scalability? In my opinion, a software project is scalable when if the demanding of that service grows, that project will be able to grow proportionaly to that increase of demands in a easy way, such as buying more hardware, putting more read databases, etc.
+
+Obtain scalability could be a big problem if the architecture of the project is not thought for that purpouse from the beginning. Make a project scalable involves changes of code from the root and often that derivates in re-writting a lot of functions, tests, middlewares, etc. It is not easy make that changes! Here I throw some material for getting inside that branch of the software development.
+
+(LINKS)
+
+### General concepts.
+
+There are two types of scalability: Horizontal or Vertical scaling. Horizontal scalling is when the developer adds more machines to the network and combine them for improving the speed (distributing tasks in all computers, multi-threading for processing data, etc). Vertical scalling means that the developer increase the power of a single PC, putting more RAM, CPU or whatever he wants. I am going to say something that I will repeat in the entire document: DO NOT FALL IN LOVE WITH ANYTHING. Both scalability models are useful, the important thing is the context. For example I would use horizontal architecture for scaling read databases and vertical one for scaling a one-write database. It is important to understand that, the most part of the tools were designed for one purpouse in a specific context and often you can apply that tool for resolving a similar problem.
+
+Another key of scalability is the design concept. Your project is going to have some points of failure and you will have to make a decision of how handle it. Decision of what solution fits or perform better in your set up. I will cover that in a future section.
+
+### Replication.
+
+Replicate databases means that you will have the same information in more than one databases. Depending on the architecture, you can have one main write databases that will handle all the requests that change the content of the databases and the other databases will just only return the requested data. Only one database handling all write requests while more than one database answer read requests? Why? Well, first of all there is an avarage of 10 of 100 are write request and the other 90 are read requests, so it is okey to distribute requests in that way. Second, having a unique write database improves ACID characteristics in that one.
+
+But, what pass if the project demands a replication of the writer database too? How you ensure ACID characteristics if you have more than one database and they are separated? Reach scalability is not easy, in the next section we will discuss some architectures that I found that could be useful for that kind of projects.
+
+### Master-Master structure.
